@@ -23,3 +23,8 @@ Colors = {
 	White = Color.from_hex('#fff7e4'),
 	FullWhite = Color.from_hex('#ffffff')
 }
+
+
+FontSmall = love.graphics.newFont('assets/m6x11plus.ttf', 18)
+FontMedium = love.graphics.newFont('assets/m6x11plus.ttf', 36)
+love.graphics.setFont(FontSmall)
