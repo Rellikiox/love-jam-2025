@@ -117,7 +117,7 @@ function hex_to_rgb(hex)
 	local g = tonumber(hex:sub(3, 4), 16) / 255
 	local b = tonumber(hex:sub(5, 6), 16) / 255
 
-	return {r, g, b}
+	return { r, g, b }
 end
 
 function choose_n(list, n)
@@ -215,4 +215,12 @@ function table.contains(t, value)
 		end
 	end
 	return false
+end
+
+function draw_shadow_text(text, position, offset)
+	position = position:floor()
+	Colors.Black:set()
+	love.graphics.print(text, position.x + offset, position.y + offset)
+	Colors.White:set()
+	love.graphics.print(text, position.x, position.y)
 end

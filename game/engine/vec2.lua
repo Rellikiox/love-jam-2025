@@ -89,5 +89,9 @@ function vec2:length_squared()
 	return self.x ^ 2 + self.y ^ 2
 end
 
+function vec2:floor()
+	return vec2 { math.floor(self.x), math.floor(self.y) }
+end
+
 vec2.zero = vec2 { 0, 0 }
 vec2.one = vec2 { 1, 1 }

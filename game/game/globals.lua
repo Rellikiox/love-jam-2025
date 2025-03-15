@@ -27,4 +27,5 @@ Colors = {
 
 FontSmall = love.graphics.newFont('assets/m6x11plus.ttf', 18)
 FontMedium = love.graphics.newFont('assets/m6x11plus.ttf', 36)
+FontLarge = love.graphics.newFont('assets/m6x11plus.ttf', 54)
 love.graphics.setFont(FontSmall)
