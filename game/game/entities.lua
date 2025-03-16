@@ -41,12 +41,24 @@ function Entity:draw()
 end
 
 function Entity:draw_commands(is_selected)
-	for _, command in ipairs(self.commands) do
-		command:draw_path(is_selected)
+	if is_selected then
+		Colors.Black:set()
+	else
+		Colors.Black:with_alpha(0.5):set()
 	end
 	for _, command in ipairs(self.commands) do
-		command:draw_marker(is_selected)
+		command:draw_path()
 	end
+
+	if is_selected then
+		Colors.FullWhite:set()
+	else
+		Colors.FullWhite:with_alpha(0.5):set()
+	end
+	for _, command in ipairs(self.commands) do
+		command:draw_marker()
+	end
+	Colors.FullWhite:set()
 end
 
 function Entity:add_command(command)

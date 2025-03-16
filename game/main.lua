@@ -54,7 +54,8 @@ local Cursor = {
 				-- Play sfx
 				return
 			end
-			level.selected_entity:add_command(Commands.Move { source = level.selected_entity:next_command_position(), destination = level:mouse_position() })
+			level.selected_entity:add_command(self.next_command)
+			self:set_mode(CusorMode.IssueMoveCommand)
 		end
 	end,
 	mouse_2_released = function(self)
@@ -63,6 +64,11 @@ local Cursor = {
 	end,
 	set_mode = function(self, mode)
 		self.mode = mode
+		if mode == CusorMode.IssueMoveCommand then
+			self.next_command = Commands.Move { source = level.selected_entity:next_command_position(), destination = level:mouse_position() }
+		else
+			self.next_command = nil
+		end
 	end,
 	current_command_is_valid = function(self)
 		if self.mode == CusorMode.IssueMoveCommand then
@@ -70,6 +76,21 @@ local Cursor = {
 			local to = level:mouse_position()
 
 			return (to - from):length() > 16 and Physics:is_line_unobstructed(from, to, level.selected_entity.radius)
+		end
+	end,
+	draw = function(self)
+		if self.next_command then
+			if self:current_command_is_valid() then
+				Colors.Black:set()
+			else
+				Colors.Red:set()
+			end
+			self.next_command:draw_path()
+		end
+	end,
+	update = function(self, delta)
+		if self.next_command then
+			self.next_command.destination = level:mouse_position()
 		end
 	end
 }
@@ -135,6 +156,8 @@ function love.load()
 end
 
 function love.update(delta)
+	Cursor:update(delta)
+
 	if not level or not level.simulation_running then
 		return
 	end
