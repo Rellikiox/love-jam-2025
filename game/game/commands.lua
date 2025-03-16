@@ -16,4 +16,12 @@ function MoveComand:draw()
 	Colors.FullWhite:set()
 end
 
+function MoveComand:update(delta)
+	local direction = (self.destination - self.entity.position):normalized()
+	self.entity.position = self.entity.position + direction * self.entity.speed * delta
+	if (self.destination - self.entity.position):length() < 1 then
+		return true
+	end
+end
+
 return { Move = MoveComand }

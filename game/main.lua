@@ -19,6 +19,10 @@ local level = {
 	mouse_position = function(self)
 		return vec2 { screen:getMousePosition() } - self.offset
 	end,
+	start_simulation = function(self)
+		self.simulation_running = true
+		print('start')
+	end
 }
 
 local CusorMode = {
@@ -109,6 +113,7 @@ function ldtk.onLevelLoaded(ldtk_level)
 	level.selected_entity = nil
 	level.simulation_running = false
 	Cursor:set_mode(CusorMode.Select)
+	Physics:load()
 end
 
 function ldtk.onLevelCreated(ldtk_level)
@@ -128,13 +133,13 @@ function love.load()
 	ldtk:goTo(1)
 end
 
-function love.update()
+function love.update(delta)
 	if not level or not level.simulation_running then
 		return
 	end
 
 	for _, entity in ipairs(level.entities) do
-		entity:draw()
+		entity:update(delta)
 	end
 end
 
@@ -146,9 +151,13 @@ function love.draw()
 			end
 
 			-- Level title
-			love.graphics.setFont(FontLarge)
+			love.graphics.setFont(FontSmall)
+			local text = 'This is how we\'re gonna rob'
+			local subtitle_position = vec2 { (game_size.x - FontSmall:getWidth(text)) / 2, 0 }
+			draw_shadow_text(text, subtitle_position, 2)
+			love.graphics.setFont(FontMedium)
 			local title_position = vec2 {
-				(game_size.x - FontLarge:getWidth(level.name)) / 2, 10
+				(game_size.x - FontMedium:getWidth(level.name)) / 2, 10
 			}
 			draw_shadow_text(level.name, title_position, 3)
 
@@ -178,14 +187,19 @@ function love.draw()
 			end
 
 			for _, entity in ipairs(level.entities) do
+				for _, command in ipairs(entity.commands) do
+					command:draw()
+				end
+			end
+			for _, entity in ipairs(level.entities) do
 				entity:draw()
 			end
 
-			Colors.Red:set()
-			for _, body in ipairs(Physics.world:getBodies()) do
-				local x, y = body:getPosition()
-				love.graphics.circle("line", x, y, 20)
-			end
+			-- Colors.Red:set()
+			-- for _, body in ipairs(Physics.world:getBodies()) do
+			-- 	local x, y = body:getPosition()
+			-- 	love.graphics.circle("line", x, y, 20)
+			-- end
 
 			Colors.FullWhite:set()
 			if level.selected_entity then
@@ -205,6 +219,8 @@ function love.keyreleased(key)
 		ldtk:next()
 	elseif key == '[' then
 		ldtk:previous()
+	elseif key == 'space' then
+		level:start_simulation()
 	end
 end
 

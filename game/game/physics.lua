@@ -3,6 +3,9 @@ local Physics = {
 }
 
 function Physics:load()
+	if self.world then
+		self.world:destroy()
+	end
 	self.world = love.physics.newWorld(0, 0, true)
 	self.world:setCallbacks(
 		function(fixture_a, fixture_b, contact)

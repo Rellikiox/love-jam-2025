@@ -6,20 +6,28 @@ local Entity = Object:extend()
 function Entity:init(args)
 	self.position = args.position
 	self.commands = {}
+	self.current_command = 1
 	self.quad = args.quad
 	self.radius = args.radius
 	self.is_goblin = args.is_goblin
+	self.speed = 10
 
 	-- Add physics for picking and collission detection
 	self.body = love.physics.newBody(Physics.world, self.position.x, self.position.y, 'dynamic')
 	self.shape = love.physics.newCircleShape(self.radius)
 	self.fixture = love.physics.newFixture(self.body, self.shape, 1)
 	self.fixture:setUserData(self)
+	self.fixture:setSensor(true)
 end
 
-function Entity:update()
-	if #self.commands == 0 then
+function Entity:update(delta)
+	if self.current_command > #self.commands then
 		return
+	end
+
+	local finished = self.commands[self.current_command]:update(delta)
+	if finished then
+		self.current_command = self.current_command + 1
 	end
 end
 
@@ -30,13 +38,10 @@ function Entity:draw()
 		self.position.x - 16,
 		self.position.y - 16
 	)
-
-	for _, command in ipairs(self.commands) do
-		command:draw()
-	end
 end
 
 function Entity:add_command(command)
+	command.entity = self
 	table.insert(self.commands, command)
 end
 
