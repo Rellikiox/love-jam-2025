@@ -3,6 +3,10 @@ local Assets = require 'game.assets'
 local Physics = require 'game.physics'
 local Entity = require 'game.entities'
 local ldtk = require 'lib.ldtk'
+local Terebi = require 'lib.terebi'
+
+game_size = vec2 { 800, 600 }
+
 
 local level = {
 	name = '',
@@ -12,7 +16,7 @@ local level = {
 	selected_entity = nil,
 	simulation_running = false,
 	mouse_position = function(self)
-		return vec2 { love.mouse.getPosition() } - self.offset
+		return vec2 { screen:getMousePosition() } - self.offset
 	end,
 }
 
@@ -71,8 +75,8 @@ end
 function ldtk.onLevelLoaded(ldtk_level)
 	level.name = string.gsub(ldtk_level.id, '_', ' ')
 	level.offset = vec2 {
-		(love.graphics.getWidth() - ldtk_level.width) / 2,
-		(love.graphics.getHeight() - ldtk_level.height) / 2,
+		(game_size.x - ldtk_level.width) / 2,
+		(game_size.y - ldtk_level.height) / 2,
 	}
 	level.layers = {}
 	level.entities = {}
@@ -85,6 +89,10 @@ function ldtk.onLevelCreated(ldtk_level)
 end
 
 function love.load()
+	Terebi.initializeLoveDefaults()
+
+	screen = Terebi.newScreen(game_size.x, game_size.y, 2)
+		:setBackgroundColor(Colors.Purple.r, Colors.Purple.g, Colors.Purple.b)
 	love.graphics.setBackgroundColor(unpack(Colors.Purple:to_array()))
 
 	Assets:load()
@@ -105,48 +113,51 @@ function love.update()
 end
 
 function love.draw()
-	if not level then
-		return
-	end
+	screen:draw(
+		function()
+			if not level then
+				return
+			end
 
-	-- Level title
-	love.graphics.setFont(FontLarge)
-	local title_position = vec2 {
-		(love.graphics.getWidth() - FontLarge:getWidth(level.name)) / 2, 10
-	}
-	draw_shadow_text(level.name, title_position, 3)
+			-- Level title
+			love.graphics.setFont(FontLarge)
+			local title_position = vec2 {
+				(game_size.x - FontLarge:getWidth(level.name)) / 2, 10
+			}
+			draw_shadow_text(level.name, title_position, 3)
 
-	-- Current mouse mode
-	love.graphics.setFont(FontMedium)
-	draw_shadow_text('Current mode: ' .. Cursor.mode, vec2 { 25, love.graphics.getHeight() - 50 }, 2)
+			-- Current mouse mode
+			love.graphics.setFont(FontMedium)
+			draw_shadow_text('Current mode: ' .. Cursor.mode, vec2 { 25, game_size.y - 50 }, 2)
 
 
-	love.graphics.push()
-	love.graphics.translate(level.offset.x, level.offset.y)
-	for _, layer in ipairs(level.layers) do
-		layer:draw()
-	end
+			love.graphics.push()
+			love.graphics.translate(level.offset.x, level.offset.y)
+			for _, layer in ipairs(level.layers) do
+				layer:draw()
+			end
 
-	for _, entity in ipairs(level.entities) do
-		entity:draw()
-	end
+			for _, entity in ipairs(level.entities) do
+				entity:draw()
+			end
 
-	-- Colors.Red:set()
-	-- for _, body in ipairs(Physics.world:getBodies()) do
-	-- 	local x, y = body:getPosition()
-	-- 	love.graphics.circle("line", x, y, body:getFixtures()[1]:getShape():getRadius())
-	-- end
+			-- Colors.Red:set()
+			-- for _, body in ipairs(Physics.world:getBodies()) do
+			-- 	local x, y = body:getPosition()
+			-- 	love.graphics.circle("line", x, y, body:getFixtures()[1]:getShape():getRadius())
+			-- end
 
-	Colors.FullWhite:set()
-	if level.selected_entity then
-		love.graphics.draw(
-			Assets.images.tiles,
-			Assets.images.selected_marker,
-			level.selected_entity.position.x - 16,
-			level.selected_entity.position.y)
-	end
+			Colors.FullWhite:set()
+			if level.selected_entity then
+				love.graphics.draw(
+					Assets.images.tiles,
+					Assets.images.selected_marker,
+					level.selected_entity.position.x - 16,
+					level.selected_entity.position.y)
+			end
 
-	love.graphics.pop()
+			love.graphics.pop()
+		end)
 end
 
 function love.keyreleased(key)
@@ -172,4 +183,8 @@ function love.mousereleased(x, y, button)
 	elseif button == 2 then
 		Cursor:mouse_2_released()
 	end
+end
+
+function love.resize(w, h)
+	screen:handleResize()
 end
