@@ -11,7 +11,7 @@
 	"iid": "dae07c10-e920-11ef-bdd1-7987eeba8e49",
 	"jsonVersion": "1.5.3",
 	"appBuildId": 473703,
-	"nextUid": 26,
+	"nextUid": 27,
 	"identifierStyle": "Capitalize",
 	"toc": [],
 	"worldLayout": "Free",
@@ -250,7 +250,45 @@
 			"limitBehavior": "MoveLastOne",
 			"pivotX": 0.5,
 			"pivotY": 0.5,
-			"fieldDefs": []
+			"fieldDefs": [
+				{
+					"identifier": "Patrol",
+					"doc": null,
+					"__type": "Array<Point>",
+					"uid": 26,
+					"type": "F_Point",
+					"isArray": true,
+					"canBeNull": true,
+					"arrayMinLength": 2,
+					"arrayMaxLength": null,
+					"editorDisplayMode": "PointPath",
+					"editorDisplayScale": 1,
+					"editorDisplayPos": "Above",
+					"editorLinkStyle": "StraightArrow",
+					"editorDisplayColor": null,
+					"editorAlwaysShow": false,
+					"editorShowInWorld": true,
+					"editorCutLongValues": true,
+					"editorTextSuffix": null,
+					"editorTextPrefix": null,
+					"useForSmartColor": false,
+					"exportToToc": false,
+					"searchable": false,
+					"min": null,
+					"max": null,
+					"regex": null,
+					"acceptFileTypes": null,
+					"defaultOverride": null,
+					"textLanguageMode": null,
+					"symmetricalRef": false,
+					"autoChainRef": true,
+					"allowOutOfLevelRef": true,
+					"allowedRefs": "OnlySame",
+					"allowedRefsEntityUid": null,
+					"allowedRefTags": [],
+					"tilesetUid": null
+				}
+			]
 		}
 	], "tilesets": [
 		{
@@ -272,7 +310,7 @@
 			"savedSelections": [],
 			"cachedPixelData": {
 				"opaqueTiles": "1111000011110000111100001111000010000000000000000000000000000000",
-				"averageColors": "ffdbffdbffdbffdb5676567656865c66ffdbfedbffdbffdb1aa9000000000000fedbfedbfedbffdb0000000000000000fedbffdbfedbfedb0000000000000000f4340000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+				"averageColors": "ffdbffdbffdbffdb5676567656765c66ffdbfedbffdbffdb1aa9299800000000fedbfedbfedbffdb0000000000000000fedbffdbfedbfedb0000000000000000f4340000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
 			}
 		}
 	], "enums": [], "externalEnums": [], "levelFields": [] },
@@ -382,13 +420,25 @@
 							"height": 21,
 							"defUid": 12,
 							"px": [496,400],
-							"fieldInstances": [],
+							"fieldInstances": [{ "__identifier": "Patrol", "__type": "Array<Point>", "__value": [ { "cx": 14, "cy": 11 }, { "cx": 15, "cy": 9 }, { "cx": 18, "cy": 10 }, { "cx": 15, "cy": 12 } ], "__tile": null, "defUid": 26, "realEditorValues": [ {
+								"id": "V_String",
+								"params": ["14,11"]
+							}, {
+								"id": "V_String",
+								"params": ["15,9"]
+							}, {
+								"id": "V_String",
+								"params": ["18,10"]
+							}, {
+								"id": "V_String",
+								"params": ["15,12"]
+							} ] }],
 							"__worldX": 464,
 							"__worldY": 368
 						},
 						{
 							"__identifier": "Enemy",
-							"__grid": [16,2],
+							"__grid": [17,2],
 							"__pivot": [0.5,0.5],
 							"__tags": [],
 							"__tile": { "tilesetUid": 2, "x": 224, "y": 0, "w": 32, "h": 32 },
@@ -397,9 +447,21 @@
 							"width": 21,
 							"height": 21,
 							"defUid": 12,
-							"px": [528,80],
-							"fieldInstances": [],
-							"__worldX": 496,
+							"px": [560,80],
+							"fieldInstances": [{ "__identifier": "Patrol", "__type": "Array<Point>", "__value": [ { "cx": 14, "cy": 2 }, { "cx": 14, "cy": 7 }, { "cx": 17, "cy": 7 }, { "cx": 17, "cy": 2 } ], "__tile": null, "defUid": 26, "realEditorValues": [ {
+								"id": "V_String",
+								"params": ["14,2"]
+							}, {
+								"id": "V_String",
+								"params": ["14,7"]
+							}, {
+								"id": "V_String",
+								"params": ["17,7"]
+							}, {
+								"id": "V_String",
+								"params": ["17,2"]
+							} ] }],
+							"__worldX": 528,
 							"__worldY": 48
 						},
 						{
@@ -414,7 +476,16 @@
 							"height": 21,
 							"defUid": 12,
 							"px": [176,368],
-							"fieldInstances": [],
+							"fieldInstances": [{ "__identifier": "Patrol", "__type": "Array<Point>", "__value": [ { "cx": 6, "cy": 10 }, { "cx": 9, "cy": 12 }, { "cx": 5, "cy": 11 } ], "__tile": null, "defUid": 26, "realEditorValues": [ {
+								"id": "V_String",
+								"params": ["6,10"]
+							}, {
+								"id": "V_String",
+								"params": ["9,12"]
+							}, {
+								"id": "V_String",
+								"params": ["5,11"]
+							} ] }],
 							"__worldX": 144,
 							"__worldY": 336
 						}
@@ -805,7 +876,7 @@
 							"height": 21,
 							"defUid": 12,
 							"px": [112,208],
-							"fieldInstances": [],
+							"fieldInstances": [{ "__identifier": "Patrol", "__type": "Array<Point>", "__value": [], "__tile": null, "defUid": 26, "realEditorValues": [] }],
 							"__worldX": 848,
 							"__worldY": 208
 						}

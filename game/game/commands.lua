@@ -30,4 +30,41 @@ function MoveComand:update(delta)
 	end
 end
 
-return { Move = MoveComand }
+local PatrolCommand = Command:extend()
+
+function PatrolCommand:init(args)
+	self.points = args.points
+	self.target_point = 1
+	self.draw_points = {}
+	for _, point in ipairs(self.points) do
+		table.insert(self.draw_points, point.x)
+		table.insert(self.draw_points, point.y)
+	end
+	table.insert(self.draw_points, self.points[1].x)
+	table.insert(self.draw_points, self.points[1].y)
+end
+
+function PatrolCommand:draw_path()
+	love.graphics.setLineWidth(2)
+	love.graphics.line(unpack(self.draw_points))
+	love.graphics.setLineWidth(1)
+end
+
+function PatrolCommand:draw_marker()
+	for _, point in ipairs(self.points) do
+		love.graphics.draw(Assets.images.tiles, Assets.images.patrol_command, point.x - 16, point.y - 16)
+	end
+end
+
+function PatrolCommand:update(delta)
+	local destination = self.points[self.target_point]
+	local direction = (destination - self.entity.position):normalized()
+	self.entity.position = self.entity.position + direction * self.entity.speed * delta
+	self.entity.body:setPosition(self.entity.position.x, self.entity.position.y)
+	if (destination - self.entity.position):length() < 1 then
+		local prev = self.target_point
+		self.target_point = math.fmod(self.target_point, #self.points) + 1
+	end
+end
+
+return { Move = MoveComand, Patrol = PatrolCommand }

@@ -5,12 +5,15 @@ local Entity = Object:extend()
 
 function Entity:init(args)
 	self.position = args.position
-	self.commands = {}
 	self.current_command = 1
 	self.quad = args.quad
 	self.radius = args.radius
 	self.is_goblin = args.is_goblin
-	self.speed = 10
+	self.speed = 30
+	self.commands = {}
+	for _, command in ipairs(args.commands or {}) do
+		self:add_command(command)
+	end
 
 	-- Add physics for picking and collission detection
 	self.body = love.physics.newBody(Physics.world, self.position.x, self.position.y, 'dynamic')

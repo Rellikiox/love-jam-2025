@@ -97,6 +97,7 @@ local Cursor = {
 
 function ldtk.onEntity(ldtk_entity)
 	local quad
+	local commands = nil
 	if ldtk_entity.id == 'Sneaky' then
 		quad = Assets.images.sneaky
 	elseif ldtk_entity.id == 'Brute' then
@@ -105,13 +106,21 @@ function ldtk.onEntity(ldtk_entity)
 		quad = Assets.images.trickster
 	elseif ldtk_entity.id == 'Enemy' then
 		quad = Assets.images.enemy
+		local points = {}
+		for _, point in ipairs(ldtk_entity.props.Patrol) do
+			table.insert(points, vec2 { point.cx + 0.5, point.cy + 0.5 } * 32)
+		end
+		commands = {
+			Commands.Patrol { points = points }
+		}
 	end
 
 	table.insert(level.entities, Entity {
 		position = vec2 { ldtk_entity.x, ldtk_entity.y },
 		quad = quad,
 		radius = ldtk_entity.width / 2,
-		is_goblin = ldtk_entity.id ~= 'Enemy'
+		is_goblin = ldtk_entity.id ~= 'Enemy',
+		commands = commands
 	})
 end
 
@@ -162,8 +171,15 @@ function love.update(delta)
 		return
 	end
 
+	local should_restart = true
 	for _, entity in ipairs(level.entities) do
 		entity:update(delta)
+		if entity.is_goblin and entity.current_command <= #entity.commands then
+			should_restart = false
+		end
+	end
+	if should_restart then
+		ldtk:reload()
 	end
 end
 

@@ -11,6 +11,7 @@ function Assets:load()
 	self.images.enemy = love.graphics.newQuad(224, 0, 32, 32, self.images.tiles)
 	self.images.selected_marker = love.graphics.newQuad(128, 32, 32, 32, self.images.tiles)
 	self.images.move_command = love.graphics.newQuad(160, 32, 32, 32, self.images.tiles)
+	self.images.patrol_command = love.graphics.newQuad(192, 32, 32, 32, self.images.tiles)
 end
 
 return Assets
