@@ -68,7 +68,8 @@ local Cursor = {
 		if self.mode == CusorMode.IssueMoveCommand then
 			local from = level.selected_entity:next_command_position()
 			local to = level:mouse_position()
-			return Physics:is_line_unobstructed(from, to, level.selected_entity.radius)
+
+			return (to - from):length() > 16 and Physics:is_line_unobstructed(from, to, level.selected_entity.radius)
 		end
 	end
 }
@@ -178,7 +179,7 @@ function love.draw()
 				else
 					Colors.Red:set()
 				end
-				love.graphics.setLineWidth(5)
+				love.graphics.setLineWidth(3)
 				local from = level.selected_entity:next_command_position()
 				local to = level:mouse_position()
 				love.graphics.line(from.x, from.y, to.x, to.y)
@@ -187,9 +188,7 @@ function love.draw()
 			end
 
 			for _, entity in ipairs(level.entities) do
-				for _, command in ipairs(entity.commands) do
-					command:draw()
-				end
+				entity:draw_commands(entity == level.selected_entity)
 			end
 			for _, entity in ipairs(level.entities) do
 				entity:draw()

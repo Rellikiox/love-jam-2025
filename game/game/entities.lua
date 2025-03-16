@@ -40,6 +40,15 @@ function Entity:draw()
 	)
 end
 
+function Entity:draw_commands(is_selected)
+	for _, command in ipairs(self.commands) do
+		command:draw_path(is_selected)
+	end
+	for _, command in ipairs(self.commands) do
+		command:draw_marker(is_selected)
+	end
+end
+
 function Entity:add_command(command)
 	command.entity = self
 	table.insert(self.commands, command)
