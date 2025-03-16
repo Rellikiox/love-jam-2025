@@ -30,6 +30,21 @@ function Entity:draw()
 		self.position.x - 16,
 		self.position.y - 16
 	)
+
+	for _, command in ipairs(self.commands) do
+		command:draw()
+	end
+end
+
+function Entity:add_command(command)
+	table.insert(self.commands, command)
+end
+
+function Entity:next_command_position()
+	if #self.commands == 0 then
+		return self.position
+	end
+	return self.commands[#self.commands].destination
 end
 
 return Entity

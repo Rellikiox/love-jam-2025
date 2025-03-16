@@ -4,6 +4,7 @@ local Physics = require 'game.physics'
 local Entity = require 'game.entities'
 local ldtk = require 'lib.ldtk'
 local Terebi = require 'lib.terebi'
+local Commands = require 'game.commands'
 
 game_size = vec2 { 800, 600 }
 
@@ -20,10 +21,14 @@ local level = {
 	end,
 }
 
+local CusorMode = {
+	Select = 'Select',
+	IssueMoveCommand = 'Move'
+}
 local Cursor = {
 	hand = love.mouse.getSystemCursor("hand"),
 	arrow = love.mouse.getSystemCursor("arrow"),
-	mode = 'Select',
+	mode = CusorMode.Select,
 	set_hand = function(self)
 		love.mouse.setCursor(self.hand)
 	end,
@@ -31,20 +36,36 @@ local Cursor = {
 		love.mouse.setCursor(self.arrow)
 	end,
 	mouse_1_released = function(self)
-		local entities = Physics:get_entities_at(level:mouse_position())
-		for _, entity in ipairs(entities) do
-			if entity.is_goblin then
-				level.selected_entity = entities[1]
-				self:set_mode('Move')
-				break
+		if self.mode == CusorMode.Select then
+			local entities = Physics:get_entities_at(level:mouse_position())
+			for _, entity in ipairs(entities) do
+				if entity.is_goblin then
+					level.selected_entity = entities[1]
+					self:set_mode(CusorMode.IssueMoveCommand)
+					break
+				end
 			end
+		elseif self.mode == CusorMode.IssueMoveCommand then
+			if not self:current_command_is_valid() then
+				-- Play sfx
+				return
+			end
+			level.selected_entity:add_command(Commands.Move { source = level.selected_entity:next_command_position(), destination = level:mouse_position() })
 		end
 	end,
 	mouse_2_released = function(self)
-
+		level.selected_entity = nil
+		self:set_mode(CusorMode.Select)
 	end,
 	set_mode = function(self, mode)
 		self.mode = mode
+	end,
+	current_command_is_valid = function(self)
+		if self.mode == CusorMode.IssueMoveCommand then
+			local from = level.selected_entity:next_command_position()
+			local to = level:mouse_position()
+			return Physics:is_line_unobstructed(from, to, level.selected_entity.radius)
+		end
 	end
 }
 
@@ -69,6 +90,11 @@ function ldtk.onEntity(ldtk_entity)
 end
 
 function ldtk.onLayer(layer)
+	for _, tile in ipairs(layer.tiles) do
+		if tile.t == 32 then
+			Physics:make_wall(vec2 { tile.px[1], tile.px[2] })
+		end
+	end
 	table.insert(level.layers, layer)
 end
 
@@ -82,7 +108,7 @@ function ldtk.onLevelLoaded(ldtk_level)
 	level.entities = {}
 	level.selected_entity = nil
 	level.simulation_running = false
-	Cursor:set_mode('Select')
+	Cursor:set_mode(CusorMode.Select)
 end
 
 function ldtk.onLevelCreated(ldtk_level)
@@ -137,15 +163,29 @@ function love.draw()
 				layer:draw()
 			end
 
+			if Cursor.mode == CusorMode.IssueMoveCommand then
+				if Cursor:current_command_is_valid() then
+					Colors.Black:set()
+				else
+					Colors.Red:set()
+				end
+				love.graphics.setLineWidth(5)
+				local from = level.selected_entity:next_command_position()
+				local to = level:mouse_position()
+				love.graphics.line(from.x, from.y, to.x, to.y)
+				love.graphics.setLineWidth(1)
+				Colors.FullWhite:set()
+			end
+
 			for _, entity in ipairs(level.entities) do
 				entity:draw()
 			end
 
-			-- Colors.Red:set()
-			-- for _, body in ipairs(Physics.world:getBodies()) do
-			-- 	local x, y = body:getPosition()
-			-- 	love.graphics.circle("line", x, y, body:getFixtures()[1]:getShape():getRadius())
-			-- end
+			Colors.Red:set()
+			for _, body in ipairs(Physics.world:getBodies()) do
+				local x, y = body:getPosition()
+				love.graphics.circle("line", x, y, 20)
+			end
 
 			Colors.FullWhite:set()
 			if level.selected_entity then
