@@ -21,14 +21,27 @@ local level = {
 	end,
 	start_simulation = function(self)
 		self.simulation_running = true
-		print('start')
 	end
 }
 
 local CusorMode = {
 	Select = 'Select',
-	IssueMoveCommand = 'Move'
+	MoveCommand = 'Move',
+	DistractCommand = 'Distract',
+	DistractTarget = 'Distract Target',
+	WaitCommand = 'Wait',
+	WaitTimer = 'Wait Time'
 }
+
+local cursor_mode_text = {
+	[CusorMode.Select] = 'Now, who did I send next? ...',
+	[CusorMode.MoveCommand] = 'Tell $1 to go here',
+	[CusorMode.DistractCommand] = 'Tell $1 to come here and...',
+	[CusorMode.DistractTarget] = 'throw a distraction here.',
+	[CusorMode.WaitCommand] = 'Tell $1 to come here and...',
+	[CusorMode.WaitTimer] = 'wait for $1 seconds.',
+}
+
 local Cursor = {
 	hand = love.mouse.getSystemCursor("hand"),
 	arrow = love.mouse.getSystemCursor("arrow"),
@@ -45,17 +58,41 @@ local Cursor = {
 			for _, entity in ipairs(entities) do
 				if entity.is_goblin then
 					level.selected_entity = entities[1]
-					self:set_mode(CusorMode.IssueMoveCommand)
+					self:set_mode(CusorMode.MoveCommand)
 					break
 				end
 			end
-		elseif self.mode == CusorMode.IssueMoveCommand then
+		elseif self.mode == CusorMode.MoveCommand then
 			if not self:current_command_is_valid() then
 				-- Play sfx
 				return
 			end
 			level.selected_entity:add_command(self.next_command)
-			self:set_mode(CusorMode.IssueMoveCommand)
+			self:set_mode(CusorMode.MoveCommand)
+		elseif self.mode == CusorMode.DistractCommand then
+			if not self:current_command_is_valid() then
+				-- Play sfx
+				return
+			end
+
+			self:set_mode(CusorMode.DistractTarget)
+		elseif self.mode == CusorMode.DistractTarget then
+			if not self:current_command_is_valid() then
+				-- Play sfx
+				return
+			end
+			level.selected_entity:add_command(self.next_command)
+			self:set_mode(CusorMode.DistractCommand)
+		elseif self.mode == CusorMode.WaitCommand then
+			if not self:current_command_is_valid() then
+				-- Play sfx
+				return
+			end
+
+			self:set_mode(CusorMode.WaitTimer)
+		elseif self.mode == CusorMode.WaitTimer then
+			level.selected_entity:add_command(self.next_command)
+			self:set_mode(CusorMode.WaitCommand)
 		end
 	end,
 	mouse_2_released = function(self)
@@ -63,20 +100,49 @@ local Cursor = {
 		self:set_mode(CusorMode.Select)
 	end,
 	set_mode = function(self, mode)
+		if mode ~= CusorMode.Select and not level.selected_entity then
+			return
+		end
+
 		self.mode = mode
-		if mode == CusorMode.IssueMoveCommand then
-			self.next_command = Commands.Move { source = level.selected_entity:next_command_position(), destination = level:mouse_position() }
-		else
+		if mode == CusorMode.Select then
 			self.next_command = nil
+			return
+		end
+
+		local source = level.selected_entity:next_command_position()
+		local destination = level:mouse_position()
+		if mode == CusorMode.MoveCommand then
+			self.next_command = Commands.Move { source = source, destination = destination }
+		elseif mode == CusorMode.DistractCommand then
+			self.next_command = Commands.Distract { source = source, destination = destination }
+		elseif mode == CusorMode.WaitCommand then
+			self.next_command = Commands.Wait { source = source, destination = destination }
 		end
 	end,
 	current_command_is_valid = function(self)
-		if self.mode == CusorMode.IssueMoveCommand then
-			local from = level.selected_entity:next_command_position()
-			local to = level:mouse_position()
-
-			return (to - from):length() > 16 and Physics:is_line_unobstructed(from, to, level.selected_entity.radius)
+		if not self.next_command then
+			return true
 		end
+
+		local from, to
+		if self.mode == CusorMode.MoveCommand then
+			from = level.selected_entity:next_command_position()
+			to = level:mouse_position()
+		elseif self.mode == CusorMode.DistractCommand then
+			from = level.selected_entity:next_command_position()
+			to = level:mouse_position()
+		elseif self.mode == CusorMode.DistractTarget then
+			from = self.next_command.destination
+			to = self.next_command.target
+		elseif self.mode == CusorMode.WaitCommand then
+			from = level.selected_entity:next_command_position()
+			to = level:mouse_position()
+		elseif self.mode == CusorMode.WaitTimer then
+			local length = (self.next_command.destination - level:mouse_position()):length()
+			return length >= 2
+		end
+		return (to - from):length() > 16 and Physics:is_line_unobstructed(from, to, level.selected_entity.radius)
 	end,
 	draw = function(self)
 		if self.next_command then
@@ -86,11 +152,25 @@ local Cursor = {
 				Colors.Red:set()
 			end
 			self.next_command:draw_path()
+			self.next_command:draw_marker()
 		end
 	end,
 	update = function(self, delta)
-		if self.next_command then
+		if self.mode == CusorMode.Select then
+		elseif self.mode == CusorMode.MoveCommand then
 			self.next_command.destination = level:mouse_position()
+		elseif self.mode == CusorMode.DistractCommand then
+			self.next_command.destination = level:mouse_position()
+		elseif self.mode == CusorMode.DistractTarget then
+			self.next_command.target = level:mouse_position()
+		elseif self.mode == CusorMode.WaitCommand then
+			self.next_command.destination = level:mouse_position()
+		elseif self.mode == CusorMode.WaitTimer then
+			local wait_time = (self.next_command.destination - level:mouse_position()):length() / 20
+			if wait_time >= 0.1 then
+				local wait_time = math.min(wait_time, 5.0)
+				self.next_command:set_wait_time(wait_time)
+			end
 		end
 	end
 }
@@ -116,6 +196,7 @@ function ldtk.onEntity(ldtk_entity)
 	end
 
 	table.insert(level.entities, Entity {
+		name = ldtk_entity.id,
 		position = vec2 { ldtk_entity.x, ldtk_entity.y },
 		quad = quad,
 		radius = ldtk_entity.width / 2,
@@ -202,8 +283,12 @@ function love.draw()
 			draw_shadow_text(level.name, title_position, 3)
 
 			-- Current mouse mode
-			love.graphics.setFont(FontMedium)
-			draw_shadow_text('Current mode: ' .. Cursor.mode, vec2 { 25, game_size.y - 50 }, 2)
+			love.graphics.setFont(FontSmall)
+			text = cursor_mode_text[Cursor.mode]
+			if level.selected_entity then
+				text = string.gsub(text, '$1', level.selected_entity.name)
+			end
+			draw_shadow_text(text, vec2 { 25, game_size.y - 50 }, 2)
 
 
 			love.graphics.push()
@@ -212,19 +297,7 @@ function love.draw()
 				layer:draw()
 			end
 
-			if Cursor.mode == CusorMode.IssueMoveCommand then
-				if Cursor:current_command_is_valid() then
-					Colors.Black:set()
-				else
-					Colors.Red:set()
-				end
-				love.graphics.setLineWidth(3)
-				local from = level.selected_entity:next_command_position()
-				local to = level:mouse_position()
-				love.graphics.line(from.x, from.y, to.x, to.y)
-				love.graphics.setLineWidth(1)
-				Colors.FullWhite:set()
-			end
+			Cursor:draw()
 
 			for _, entity in ipairs(level.entities) do
 				entity:draw_commands(entity == level.selected_entity)
@@ -241,11 +314,7 @@ function love.draw()
 
 			Colors.FullWhite:set()
 			if level.selected_entity then
-				love.graphics.draw(
-					Assets.images.tiles,
-					Assets.images.selected_marker,
-					level.selected_entity.position.x - 16,
-					level.selected_entity.position.y)
+				Assets.images.selected_marker:draw(level.selected_entity.position)
 			end
 
 			love.graphics.pop()
@@ -259,6 +328,12 @@ function love.keyreleased(key)
 		ldtk:previous()
 	elseif key == 'space' then
 		level:start_simulation()
+	elseif key == 'm' then
+		Cursor:set_mode(CusorMode.MoveCommand)
+	elseif key == 'd' then
+		Cursor:set_mode(CusorMode.DistractCommand)
+	elseif key == 'w' then
+		Cursor:set_mode(CusorMode.WaitCommand)
 	end
 end
 

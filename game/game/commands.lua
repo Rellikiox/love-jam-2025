@@ -18,7 +18,7 @@ function MoveComand:init(args)
 end
 
 function MoveComand:draw_marker()
-	love.graphics.draw(Assets.images.tiles, Assets.images.move_command, self.destination.x - 16, self.destination.y - 16)
+	Assets.images.move_command:draw(self.destination)
 end
 
 function MoveComand:update(delta)
@@ -52,7 +52,7 @@ end
 
 function PatrolCommand:draw_marker()
 	for _, point in ipairs(self.points) do
-		love.graphics.draw(Assets.images.tiles, Assets.images.patrol_command, point.x - 16, point.y - 16)
+		Assets.images.patrol_command:draw(point)
 	end
 end
 
@@ -67,4 +67,92 @@ function PatrolCommand:update(delta)
 	end
 end
 
-return { Move = MoveComand, Patrol = PatrolCommand }
+local DistractComand = MoveComand:extend()
+
+function DistractComand:init(args)
+	self.source = args.source
+	self.destination = args.destination
+	self.target = args.target
+	self.arrived = false
+	self.finished = false
+	self.wait_timer = Timer {
+		timeout = 1.0,
+		callback = function()
+			self.finished = true
+		end
+	}
+end
+
+function DistractComand:draw_path()
+	Command.draw_path(self)
+	if self.target then
+		love.graphics.line(self.destination.x, self.destination.y, self.target.x, self.target.y)
+	end
+end
+
+function DistractComand:draw_marker()
+	Assets.images.distract_command:draw(self.destination)
+	if self.target then
+		Assets.images.distract_target:draw(self.target)
+	end
+end
+
+function DistractComand:update(delta)
+	if not self.arrived then
+		self.arrived = MoveComand.update(self, delta)
+	else
+		self.wait_timer:increment(delta)
+		if self.finished then
+			return true
+		end
+	end
+end
+
+local WaitComand = MoveComand:extend()
+
+function WaitComand:init(args)
+	self.source = args.source
+	self.destination = args.destination
+	self.finished = false
+	self.wait_timer = Timer {
+		timeout = 0,
+		callback = function()
+			self.finished = true
+		end
+	}
+end
+
+function WaitComand:set_wait_time(time)
+	self.wait_timer.timeout = tonumber(string.format("%.1f", time))
+end
+
+function WaitComand:draw_marker()
+	local offset = (self.arrived and not self.finished) and vec2 { 0, -20 } or vec2.zero
+
+	Colors.FullWhite:set()
+	Assets.images.wait_command:draw(self.destination + offset)
+
+	Colors.Black:set()
+	love.graphics.setFont(FontTiny)
+	local point = (self.destination + offset):floor()
+	Colors.White:set()
+	love.graphics.print(string.format("%.1f", self.wait_timer.timeout - self.wait_timer.elapsed), point.x - 7,
+		point.y - 12)
+end
+
+function WaitComand:update(delta)
+	if not self.arrived then
+		self.arrived = MoveComand.update(self, delta)
+	else
+		self.wait_timer:increment(delta)
+		if self.finished then
+			return true
+		end
+	end
+end
+
+-- WaitSignalCommand
+
+-- SendSignalCommand
+
+return { Move = MoveComand, Patrol = PatrolCommand, Distract = DistractComand, Wait = WaitComand }
