@@ -11,7 +11,7 @@
 	"iid": "dae07c10-e920-11ef-bdd1-7987eeba8e49",
 	"jsonVersion": "1.5.3",
 	"appBuildId": 473703,
-	"nextUid": 27,
+	"nextUid": 30,
 	"identifierStyle": "Capitalize",
 	"toc": [],
 	"worldLayout": "Free",
@@ -287,6 +287,46 @@
 					"allowedRefsEntityUid": null,
 					"allowedRefTags": [],
 					"tilesetUid": null
+				},
+				{
+					"identifier": "Components",
+					"doc": null,
+					"__type": "Array<String>",
+					"uid": 29,
+					"type": "F_String",
+					"isArray": true,
+					"canBeNull": true,
+					"arrayMinLength": null,
+					"arrayMaxLength": null,
+					"editorDisplayMode": "Hidden",
+					"editorDisplayScale": 1,
+					"editorDisplayPos": "Above",
+					"editorLinkStyle": "StraightArrow",
+					"editorDisplayColor": null,
+					"editorAlwaysShow": false,
+					"editorShowInWorld": true,
+					"editorCutLongValues": true,
+					"editorTextSuffix": null,
+					"editorTextPrefix": null,
+					"useForSmartColor": false,
+					"exportToToc": false,
+					"searchable": false,
+					"min": null,
+					"max": null,
+					"regex": null,
+					"acceptFileTypes": null,
+					"defaultOverride": {
+						"id": "V_String",
+						"params": ["Hearing"]
+					},
+					"textLanguageMode": null,
+					"symmetricalRef": false,
+					"autoChainRef": true,
+					"allowOutOfLevelRef": true,
+					"allowedRefs": "OnlySame",
+					"allowedRefsEntityUid": null,
+					"allowedRefTags": [],
+					"tilesetUid": null
 				}
 			]
 		}
@@ -310,7 +350,7 @@
 			"savedSelections": [],
 			"cachedPixelData": {
 				"opaqueTiles": "1111000011110000111100001111000010000000000000000000000000000000",
-				"averageColors": "ffdbffdbffdbffdb5676567656765c66ffdbfedbffdbffdb1aa9299800000000fedbfedbfedbffdb0000000000000000fedbffdbfedbfedb0000000000000000f4340000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+				"averageColors": "ffdbffdbffdbffdb5676567656765c66ffdbfedbffdbffdb1aa9488729884666fedbfedbfedbffdb45550a7752223777fedbffdbfedbfedb0000000000000000f4340000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
 			}
 		}
 	], "enums": [], "externalEnums": [], "levelFields": [] },
@@ -420,19 +460,22 @@
 							"height": 21,
 							"defUid": 12,
 							"px": [496,400],
-							"fieldInstances": [{ "__identifier": "Patrol", "__type": "Array<Point>", "__value": [ { "cx": 14, "cy": 11 }, { "cx": 15, "cy": 9 }, { "cx": 18, "cy": 10 }, { "cx": 15, "cy": 12 } ], "__tile": null, "defUid": 26, "realEditorValues": [ {
-								"id": "V_String",
-								"params": ["14,11"]
-							}, {
-								"id": "V_String",
-								"params": ["15,9"]
-							}, {
-								"id": "V_String",
-								"params": ["18,10"]
-							}, {
-								"id": "V_String",
-								"params": ["15,12"]
-							} ] }],
+							"fieldInstances": [
+								{ "__identifier": "Patrol", "__type": "Array<Point>", "__value": [ { "cx": 14, "cy": 11 }, { "cx": 15, "cy": 9 }, { "cx": 18, "cy": 10 }, { "cx": 15, "cy": 12 } ], "__tile": null, "defUid": 26, "realEditorValues": [ {
+									"id": "V_String",
+									"params": ["14,11"]
+								}, {
+									"id": "V_String",
+									"params": ["15,9"]
+								}, {
+									"id": "V_String",
+									"params": ["18,10"]
+								}, {
+									"id": "V_String",
+									"params": ["15,12"]
+								} ] },
+								{ "__identifier": "Components", "__type": "Array<String>", "__value": [], "__tile": null, "defUid": 29, "realEditorValues": [] }
+							],
 							"__worldX": 464,
 							"__worldY": 368
 						},
@@ -448,19 +491,22 @@
 							"height": 21,
 							"defUid": 12,
 							"px": [560,80],
-							"fieldInstances": [{ "__identifier": "Patrol", "__type": "Array<Point>", "__value": [ { "cx": 14, "cy": 2 }, { "cx": 14, "cy": 7 }, { "cx": 17, "cy": 7 }, { "cx": 17, "cy": 2 } ], "__tile": null, "defUid": 26, "realEditorValues": [ {
-								"id": "V_String",
-								"params": ["14,2"]
-							}, {
-								"id": "V_String",
-								"params": ["14,7"]
-							}, {
-								"id": "V_String",
-								"params": ["17,7"]
-							}, {
-								"id": "V_String",
-								"params": ["17,2"]
-							} ] }],
+							"fieldInstances": [
+								{ "__identifier": "Patrol", "__type": "Array<Point>", "__value": [ { "cx": 14, "cy": 2 }, { "cx": 14, "cy": 7 }, { "cx": 17, "cy": 7 }, { "cx": 17, "cy": 2 } ], "__tile": null, "defUid": 26, "realEditorValues": [ {
+									"id": "V_String",
+									"params": ["14,2"]
+								}, {
+									"id": "V_String",
+									"params": ["14,7"]
+								}, {
+									"id": "V_String",
+									"params": ["17,7"]
+								}, {
+									"id": "V_String",
+									"params": ["17,2"]
+								} ] },
+								{ "__identifier": "Components", "__type": "Array<String>", "__value": [], "__tile": null, "defUid": 29, "realEditorValues": [] }
+							],
 							"__worldX": 528,
 							"__worldY": 48
 						},
@@ -476,16 +522,19 @@
 							"height": 21,
 							"defUid": 12,
 							"px": [176,368],
-							"fieldInstances": [{ "__identifier": "Patrol", "__type": "Array<Point>", "__value": [ { "cx": 6, "cy": 10 }, { "cx": 9, "cy": 12 }, { "cx": 5, "cy": 11 } ], "__tile": null, "defUid": 26, "realEditorValues": [ {
-								"id": "V_String",
-								"params": ["6,10"]
-							}, {
-								"id": "V_String",
-								"params": ["9,12"]
-							}, {
-								"id": "V_String",
-								"params": ["5,11"]
-							} ] }],
+							"fieldInstances": [
+								{ "__identifier": "Patrol", "__type": "Array<Point>", "__value": [ { "cx": 6, "cy": 10 }, { "cx": 9, "cy": 12 }, { "cx": 5, "cy": 11 } ], "__tile": null, "defUid": 26, "realEditorValues": [ {
+									"id": "V_String",
+									"params": ["6,10"]
+								}, {
+									"id": "V_String",
+									"params": ["9,12"]
+								}, {
+									"id": "V_String",
+									"params": ["5,11"]
+								} ] },
+								{ "__identifier": "Components", "__type": "Array<String>", "__value": ["Hearing"], "__tile": null, "defUid": 29, "realEditorValues": [null] }
+							],
 							"__worldX": 144,
 							"__worldY": 336
 						}
@@ -876,7 +925,10 @@
 							"height": 21,
 							"defUid": 12,
 							"px": [112,208],
-							"fieldInstances": [{ "__identifier": "Patrol", "__type": "Array<Point>", "__value": [], "__tile": null, "defUid": 26, "realEditorValues": [] }],
+							"fieldInstances": [
+								{ "__identifier": "Patrol", "__type": "Array<Point>", "__value": [], "__tile": null, "defUid": 26, "realEditorValues": [] },
+								{ "__identifier": "Components", "__type": "Array<String>", "__value": [], "__tile": null, "defUid": 29, "realEditorValues": [] }
+							],
 							"__worldX": 848,
 							"__worldY": 208
 						}

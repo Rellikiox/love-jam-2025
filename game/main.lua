@@ -1,13 +1,29 @@
 require 'game.globals'
 local Assets = require 'game.assets'
 local Physics = require 'game.physics'
-local Entity = require 'game.entities'
+local Entities = require 'game.entities'
 local ldtk = require 'lib.ldtk'
 local Terebi = require 'lib.terebi'
 local Commands = require 'game.commands'
 local Events = require 'engine.events'
 
 game_size = vec2 { 800, 600 }
+local level
+
+local FirecrackerDust = Object:extend()
+
+function FirecrackerDust:init(args)
+	self.position = args.position
+	self.alive = true
+	self.rotation = math.random() * math.pi * 2
+end
+
+function FirecrackerDust:update(delta)
+end
+
+function FirecrackerDust:draw()
+	Assets.images.firecracker_dust:draw(self.position, self.rotation)
+end
 
 local Firecracker = Object:extend()
 function Firecracker:init(args)
@@ -18,7 +34,6 @@ function Firecracker:init(args)
 	self.body:setLinearVelocity(velocity.x, velocity.y)
 	self.body:setLinearDamping(5)
 	local ang = (math.random() - 0.5) * math.pi * 2
-	print(ang)
 	self.body:setAngularVelocity(ang)
 
 	self.body:setAngularDamping(1)
@@ -29,8 +44,15 @@ function Firecracker:init(args)
 		timeout = 3,
 		autostart = false,
 		callback = function()
-			local x, y = self.body:getPosition()
-			Events:send('firecracker-explosion', vec2 { x, y }, 100)
+			local position = vec2 { self.body:getPosition() }
+			table.insert(level.entities, FirecrackerDust { position = position })
+			local neaby = Physics:get_entities_at(position, 100)
+			for _, ent in ipairs(neaby) do
+				local hearing = ent:get_component(Entities.Hearing)
+				if hearing then
+					hearing:process_noise({ position = position })
+				end
+			end
 			self.alive = false
 		end
 	}
@@ -48,22 +70,7 @@ function Firecracker:update(delta)
 	end
 end
 
-local FirecrackerDust = Object:extend()
-
-function FirecrackerDust:init(args)
-	self.position = args.position
-	self.alive = true
-	self.rotation = math.random() * math.pi * 2
-end
-
-function FirecrackerDust:update(delta)
-end
-
-function FirecrackerDust:draw()
-	Assets.images.firecracker_dust:draw(self.position, self.rotation)
-end
-
-local level = {
+level = {
 	name = '',
 	offset = vec2.zero,
 	layers = {},
@@ -161,7 +168,7 @@ local Cursor = {
 		if mode == CusorMode.MoveCommand then
 			self.next_command = Commands.Move { source = source, destination = destination }
 		elseif mode == CusorMode.DistractCommand then
-			self.next_command = Commands.Distract { source = source, destination = destination }
+			self.next_command = Commands.ThrowFirecracker { source = source, destination = destination }
 		elseif mode == CusorMode.WaitCommand then
 			self.next_command = Commands.Wait { source = source, destination = destination }
 		end
@@ -252,13 +259,21 @@ function ldtk.onEntity(ldtk_entity)
 		}
 	end
 
-	table.insert(level.entities, Entity {
+	local components = {}
+	if ldtk_entity.props.Components then
+		for _, component_name in ipairs(ldtk_entity.props.Components) do
+			table.insert(components, Entities[component_name] {})
+		end
+	end
+
+	table.insert(level.entities, Entities.Entity {
 		name = ldtk_entity.id,
 		position = vec2 { ldtk_entity.x, ldtk_entity.y },
 		quad = quad,
 		radius = ldtk_entity.width / 2,
 		is_goblin = ldtk_entity.id ~= 'Enemy',
-		commands = commands
+		commands = commands,
+		components = components
 	})
 end
 
@@ -301,9 +316,6 @@ function love.load()
 		table.insert(level.entities, Firecracker { position = from, target = to })
 	end)
 
-	Events:listen(nil, 'firecracker-explosion', function(position)
-		table.insert(level.entities, FirecrackerDust { position = position })
-	end)
 
 	ldtk:load('assets/levels.ldtk')
 	ldtk:goTo(1)

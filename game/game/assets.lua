@@ -28,6 +28,7 @@ function Assets:load()
 	self.images.wait_command = Drawable(love.graphics.newQuad(128, 64, 32, 32, self.images.tiles))
 	self.images.firecracker = Drawable(love.graphics.newQuad(160, 64, 32, 32, self.images.tiles))
 	self.images.firecracker_dust = Drawable(love.graphics.newQuad(192, 64, 32, 32, self.images.tiles))
+	self.images.investigate_command = Drawable(love.graphics.newQuad(128, 96, 32, 32, self.images.tiles))
 end
 
 return Assets

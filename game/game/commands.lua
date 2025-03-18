@@ -1,8 +1,13 @@
 local Assets = require 'game.assets'
 local Events = require 'engine.events'
 
-local Command = Object:extend()
+local CommandState = {
+	Running = 'running',
+	Finished = 'finished',
+	Destroy = 'destroy'
+}
 
+local Command = Object:extend()
 
 
 function Command:draw_path()
@@ -11,29 +16,32 @@ function Command:draw_path()
 	love.graphics.setLineWidth(1)
 end
 
-local MoveComand = Command:extend()
+local MoveCommand = Command:extend()
 
-function MoveComand:init(args)
+function MoveCommand:init(args)
+	Command.init(self, args)
 	self.source = args.source
 	self.destination = args.destination
 end
 
-function MoveComand:draw_marker()
+function MoveCommand:draw_marker()
 	Assets.images.move_command:draw(self.destination)
 end
 
-function MoveComand:update(delta)
+function MoveCommand:update(delta)
 	local direction = (self.destination - self.entity.position):normalized()
 	self.entity.position = self.entity.position + direction * self.entity.speed * delta
 	self.entity.body:setPosition(self.entity.position.x, self.entity.position.y)
 	if (self.destination - self.entity.position):length() < 1 then
-		return true
+		return CommandState.Finished
 	end
+	return CommandState.Running
 end
 
 local PatrolCommand = Command:extend()
 
 function PatrolCommand:init(args)
+	Command.init(self, args)
 	self.points = args.points
 	self.target_point = 1
 	self.draw_points = {}
@@ -66,13 +74,14 @@ function PatrolCommand:update(delta)
 		local prev = self.target_point
 		self.target_point = math.fmod(self.target_point, #self.points) + 1
 	end
+	return CommandState.Running
 end
 
-local DistractComand = MoveComand:extend()
+local ThrowFirecrackerComand = MoveCommand:extend()
 
-function DistractComand:init(args)
-	self.source = args.source
-	self.destination = args.destination
+function ThrowFirecrackerComand:init(args)
+	MoveCommand.init(self, args)
+
 	self.target = args.target
 	self.arrived = false
 	self.finished = false
@@ -85,39 +94,42 @@ function DistractComand:init(args)
 	}
 end
 
-function DistractComand:draw_path()
+function ThrowFirecrackerComand:draw_path()
 	Command.draw_path(self)
 	if self.target then
 		love.graphics.line(self.destination.x, self.destination.y, self.target.x, self.target.y)
 	end
 end
 
-function DistractComand:draw_marker()
+function ThrowFirecrackerComand:draw_marker()
 	Assets.images.distract_command:draw(self.destination)
 	if self.target then
 		Assets.images.distract_target:draw(self.target)
+		love.graphics.circle('line', self.target.x, self.target.y, 100)
 	end
 end
 
-function DistractComand:update(delta)
+function ThrowFirecrackerComand:update(delta)
 	if not self.arrived then
-		self.arrived = MoveComand.update(self, delta)
+		local move_state = MoveCommand.update(self, delta)
+		self.arrived = move_state == CommandState.Finished
 		if self.arrived then
 			self.wait_timer:start()
 		end
 	else
 		self.wait_timer:increment(delta)
 		if self.wait_timer.finished then
-			return true
+			return CommandState.Finished
 		end
 	end
+	return CommandState.Running
 end
 
-local WaitComand = MoveComand:extend()
+local WaitComand = MoveCommand:extend()
 
 function WaitComand:init(args)
-	self.source = args.source
-	self.destination = args.destination
+	MoveCommand.init(self, args)
+
 	self.finished = false
 	self.wait_timer = Timer {
 		timeout = 0,
@@ -149,17 +161,73 @@ end
 
 function WaitComand:update(delta)
 	if not self.arrived then
-		self.arrived = MoveComand.update(self, delta)
+		self.arrived = MoveCommand.update(self, delta)
 	else
 		self.wait_timer:increment(delta)
 		if self.finished then
-			return true
+			return CommandState.Finished
 		end
 	end
+	return CommandState.Running
 end
 
 -- WaitSignalCommand
 
 -- SendSignalCommand
 
-return { Move = MoveComand, Patrol = PatrolCommand, Distract = DistractComand, Wait = WaitComand }
+
+
+local InvestigateCommand = MoveCommand:extend()
+
+function InvestigateCommand:init(args)
+	Command.init(self, args)
+
+	self.path = args.path
+	self.path_index = 1
+
+	self.draw_points = {}
+	for _, point in ipairs(self.path) do
+		table.insert(self.draw_points, point.x)
+		table.insert(self.draw_points, point.y)
+	end
+	self.wait_timer = Timer { autostart = false, timeout = 3 }
+end
+
+function InvestigateCommand:draw_path()
+	love.graphics.setLineWidth(1)
+	love.graphics.line(unpack(self.draw_points))
+end
+
+function InvestigateCommand:draw_marker()
+	Assets.images.investigate_command:draw(self.path[#self.path])
+end
+
+function InvestigateCommand:update(delta)
+	if self.path_index <= #self.path then
+		local target = self.path[self.path_index]
+		local direction = (target - self.entity.position):normalized()
+		self.entity.position = self.entity.position + direction * self.entity.speed * delta
+		self.entity.body:setPosition(self.entity.position.x, self.entity.position.y)
+		if (target - self.entity.position):length() < 1 then
+			self.path_index = self.path_index + 1
+			if self.path_index > #self.path then
+				self.wait_timer:start()
+			end
+		end
+	else
+		self.wait_timer:increment(delta)
+		if self.wait_timer.finished then
+			return CommandState.Destroy
+		end
+	end
+	return CommandState.Running
+end
+
+return {
+	Move = MoveCommand,
+	Patrol = PatrolCommand,
+	ThrowFirecracker = ThrowFirecrackerComand,
+	Wait = WaitComand,
+	Investigate = InvestigateCommand,
+	State = CommandState
+}

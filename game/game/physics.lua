@@ -11,7 +11,6 @@ function Physics:load()
 		function(fixture_a, fixture_b, contact)
 			local a = fixture_a:getUserData()
 			local b = fixture_b:getUserData()
-			print('collission')
 		end,
 		nil,
 		nil,
@@ -19,14 +18,21 @@ function Physics:load()
 	)
 end
 
-function Physics:get_entities_at(position)
+function Physics:get_entities_at(position, radius)
+	radius = radius or 0
 	local entities = {}
-	self.world:queryBoundingBox(position.x - 2, position.y - 2, position.x + 2, position.y + 2, function(fixture)
-		local entity = fixture:getUserData()
-		if entity then
-			table.insert(entities, entity)
-		end
-	end)
+	self.world:queryBoundingBox(position.x - radius, position.y - radius, position.x + radius, position.y + radius,
+		function(fixture)
+			local entity = fixture:getUserData()
+			if entity then
+				local other_position = vec2 { fixture:getBody():getPosition() }
+				local entity_radius = fixture:getShape():getRadius()
+				if ((position - other_position):length() - entity_radius) <= radius then
+					table.insert(entities, entity)
+				end
+			end
+			return true
+		end)
 	return entities
 end
 
