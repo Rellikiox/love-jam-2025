@@ -1,4 +1,5 @@
 local Assets = require 'game.assets'
+local Events = require 'engine.events'
 
 local Command = Object:extend()
 
@@ -76,9 +77,10 @@ function DistractComand:init(args)
 	self.arrived = false
 	self.finished = false
 	self.wait_timer = Timer {
+		autostart = false,
 		timeout = 1.0,
 		callback = function()
-			self.finished = true
+			Events:send('launch-firecracker', self.destination, self.target)
 		end
 	}
 end
@@ -100,9 +102,12 @@ end
 function DistractComand:update(delta)
 	if not self.arrived then
 		self.arrived = MoveComand.update(self, delta)
+		if self.arrived then
+			self.wait_timer:start()
+		end
 	else
 		self.wait_timer:increment(delta)
-		if self.finished then
+		if self.wait_timer.finished then
 			return true
 		end
 	end
@@ -120,10 +125,12 @@ function WaitComand:init(args)
 			self.finished = true
 		end
 	}
+	self:set_wait_time(0.1)
 end
 
 function WaitComand:set_wait_time(time)
-	self.wait_timer.timeout = tonumber(string.format("%.1f", time))
+	self.wait_time = string.format("%.1f", time)
+	self.wait_timer.timeout = tonumber(self.wait_time)
 end
 
 function WaitComand:draw_marker()

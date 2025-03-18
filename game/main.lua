@@ -5,9 +5,63 @@ local Entity = require 'game.entities'
 local ldtk = require 'lib.ldtk'
 local Terebi = require 'lib.terebi'
 local Commands = require 'game.commands'
+local Events = require 'engine.events'
 
 game_size = vec2 { 800, 600 }
 
+local Firecracker = Object:extend()
+function Firecracker:init(args)
+	self.body = love.physics.newBody(Physics.world, args.position.x, args.position.y, 'dynamic')
+	self.shape = love.physics.newCircleShape(5)
+	self.fixture = love.physics.newFixture(self.body, self.shape, 1)
+	local velocity = (args.target - args.position) * 5
+	self.body:setLinearVelocity(velocity.x, velocity.y)
+	self.body:setLinearDamping(5)
+	local ang = (math.random() - 0.5) * math.pi * 2
+	print(ang)
+	self.body:setAngularVelocity(ang)
+
+	self.body:setAngularDamping(1)
+	self.fixture:setRestitution(0.9)
+
+	self.alive = true
+	self.timer = Timer {
+		timeout = 3,
+		autostart = false,
+		callback = function()
+			local x, y = self.body:getPosition()
+			Events:send('firecracker-explosion', vec2 { x, y }, 100)
+			self.alive = false
+		end
+	}
+	self.timer:start()
+end
+
+function Firecracker:draw()
+	local point = vec2 { self.body:getPosition() }
+	Assets.images.firecracker:draw(point, self.body:getAngle())
+end
+
+function Firecracker:update(delta)
+	if self.alive then
+		self.timer:increment(delta)
+	end
+end
+
+local FirecrackerDust = Object:extend()
+
+function FirecrackerDust:init(args)
+	self.position = args.position
+	self.alive = true
+	self.rotation = math.random() * math.pi * 2
+end
+
+function FirecrackerDust:update(delta)
+end
+
+function FirecrackerDust:draw()
+	Assets.images.firecracker_dust:draw(self.position, self.rotation)
+end
 
 local level = {
 	name = '',
@@ -21,7 +75,7 @@ local level = {
 	end,
 	start_simulation = function(self)
 		self.simulation_running = true
-	end
+	end,
 }
 
 local CusorMode = {
@@ -33,18 +87,10 @@ local CusorMode = {
 	WaitTimer = 'Wait Time'
 }
 
-local cursor_mode_text = {
-	[CusorMode.Select] = 'Now, who did I send next? ...',
-	[CusorMode.MoveCommand] = 'Tell $1 to go here',
-	[CusorMode.DistractCommand] = 'Tell $1 to come here and...',
-	[CusorMode.DistractTarget] = 'throw a distraction here.',
-	[CusorMode.WaitCommand] = 'Tell $1 to come here and...',
-	[CusorMode.WaitTimer] = 'wait for $1 seconds.',
-}
-
 local Cursor = {
 	hand = love.mouse.getSystemCursor("hand"),
 	arrow = love.mouse.getSystemCursor("arrow"),
+	selected_entity = nil,
 	mode = CusorMode.Select,
 	set_hand = function(self)
 		love.mouse.setCursor(self.hand)
@@ -57,7 +103,7 @@ local Cursor = {
 			local entities = Physics:get_entities_at(level:mouse_position())
 			for _, entity in ipairs(entities) do
 				if entity.is_goblin then
-					level.selected_entity = entities[1]
+					self.selected_entity = entities[1]
 					self:set_mode(CusorMode.MoveCommand)
 					break
 				end
@@ -67,7 +113,7 @@ local Cursor = {
 				-- Play sfx
 				return
 			end
-			level.selected_entity:add_command(self.next_command)
+			self.selected_entity:add_command(self.next_command)
 			self:set_mode(CusorMode.MoveCommand)
 		elseif self.mode == CusorMode.DistractCommand then
 			if not self:current_command_is_valid() then
@@ -81,7 +127,7 @@ local Cursor = {
 				-- Play sfx
 				return
 			end
-			level.selected_entity:add_command(self.next_command)
+			self.selected_entity:add_command(self.next_command)
 			self:set_mode(CusorMode.DistractCommand)
 		elseif self.mode == CusorMode.WaitCommand then
 			if not self:current_command_is_valid() then
@@ -91,16 +137,16 @@ local Cursor = {
 
 			self:set_mode(CusorMode.WaitTimer)
 		elseif self.mode == CusorMode.WaitTimer then
-			level.selected_entity:add_command(self.next_command)
+			self.selected_entity:add_command(self.next_command)
 			self:set_mode(CusorMode.WaitCommand)
 		end
 	end,
 	mouse_2_released = function(self)
-		level.selected_entity = nil
+		self.selected_entity = nil
 		self:set_mode(CusorMode.Select)
 	end,
 	set_mode = function(self, mode)
-		if mode ~= CusorMode.Select and not level.selected_entity then
+		if mode ~= CusorMode.Select and not self.selected_entity then
 			return
 		end
 
@@ -110,7 +156,7 @@ local Cursor = {
 			return
 		end
 
-		local source = level.selected_entity:next_command_position()
+		local source = self.selected_entity:next_command_position()
 		local destination = level:mouse_position()
 		if mode == CusorMode.MoveCommand then
 			self.next_command = Commands.Move { source = source, destination = destination }
@@ -127,22 +173,21 @@ local Cursor = {
 
 		local from, to
 		if self.mode == CusorMode.MoveCommand then
-			from = level.selected_entity:next_command_position()
+			from = self.selected_entity:next_command_position()
 			to = level:mouse_position()
 		elseif self.mode == CusorMode.DistractCommand then
-			from = level.selected_entity:next_command_position()
+			from = self.selected_entity:next_command_position()
 			to = level:mouse_position()
 		elseif self.mode == CusorMode.DistractTarget then
-			from = self.next_command.destination
-			to = self.next_command.target
+			return true
 		elseif self.mode == CusorMode.WaitCommand then
-			from = level.selected_entity:next_command_position()
+			from = self.selected_entity:next_command_position()
 			to = level:mouse_position()
 		elseif self.mode == CusorMode.WaitTimer then
 			local length = (self.next_command.destination - level:mouse_position()):length()
 			return length >= 2
 		end
-		return (to - from):length() > 16 and Physics:is_line_unobstructed(from, to, level.selected_entity.radius)
+		return (to - from):length() > 16 and Physics:is_line_unobstructed(from, to, self.selected_entity.radius)
 	end,
 	draw = function(self)
 		if self.next_command then
@@ -153,6 +198,9 @@ local Cursor = {
 			end
 			self.next_command:draw_path()
 			self.next_command:draw_marker()
+		end
+		if self.selected_entity then
+			Assets.images.selected_marker:draw(self.selected_entity.position)
 		end
 	end,
 	update = function(self, delta)
@@ -173,6 +221,15 @@ local Cursor = {
 			end
 		end
 	end
+}
+
+local cursor_mode_text = {
+	[CusorMode.Select] = function() return 'Now, who did I send next? ...' end,
+	[CusorMode.MoveCommand] = function() return Cursor.selected_entity.name .. ' should go here' end,
+	[CusorMode.DistractCommand] = function() return Cursor.selected_entity.name .. ' should walk here and then...' end,
+	[CusorMode.DistractTarget] = function() return 'throw a firecracker over here.' end,
+	[CusorMode.WaitCommand] = function() return Cursor.selected_entity.name .. ' should walk here and...' end,
+	[CusorMode.WaitTimer] = function() return 'wait for ' .. Cursor.next_command.wait_time .. ' seconds.' end,
 }
 
 function ldtk.onEntity(ldtk_entity)
@@ -222,7 +279,6 @@ function ldtk.onLevelLoaded(ldtk_level)
 	}
 	level.layers = {}
 	level.entities = {}
-	level.selected_entity = nil
 	level.simulation_running = false
 	Cursor:set_mode(CusorMode.Select)
 	Physics:load()
@@ -241,6 +297,14 @@ function love.load()
 	Assets:load()
 	Physics:load()
 
+	Events:listen(nil, 'launch-firecracker', function(from, to)
+		table.insert(level.entities, Firecracker { position = from, target = to })
+	end)
+
+	Events:listen(nil, 'firecracker-explosion', function(position)
+		table.insert(level.entities, FirecrackerDust { position = position })
+	end)
+
 	ldtk:load('assets/levels.ldtk')
 	ldtk:goTo(1)
 end
@@ -252,15 +316,14 @@ function love.update(delta)
 		return
 	end
 
-	local should_restart = true
-	for _, entity in ipairs(level.entities) do
+	Physics.world:update(delta)
+
+	for i = #level.entities, 1, -1 do
+		local entity = level.entities[i]
 		entity:update(delta)
-		if entity.is_goblin and entity.current_command <= #entity.commands then
-			should_restart = false
+		if not entity.alive then
+			table.remove(level.entities, i)
 		end
-	end
-	if should_restart then
-		ldtk:reload()
 	end
 end
 
@@ -284,11 +347,7 @@ function love.draw()
 
 			-- Current mouse mode
 			love.graphics.setFont(FontSmall)
-			text = cursor_mode_text[Cursor.mode]
-			if level.selected_entity then
-				text = string.gsub(text, '$1', level.selected_entity.name)
-			end
-			draw_shadow_text(text, vec2 { 25, game_size.y - 50 }, 2)
+			draw_shadow_text(cursor_mode_text[Cursor.mode](), vec2 { 25, game_size.y - 50 }, 2)
 
 
 			love.graphics.push()
@@ -300,7 +359,9 @@ function love.draw()
 			Cursor:draw()
 
 			for _, entity in ipairs(level.entities) do
-				entity:draw_commands(entity == level.selected_entity)
+				if entity.commands then
+					entity:draw_commands(entity == Cursor.selected_entity)
+				end
 			end
 			for _, entity in ipairs(level.entities) do
 				entity:draw()
@@ -313,9 +374,6 @@ function love.draw()
 			-- end
 
 			Colors.FullWhite:set()
-			if level.selected_entity then
-				Assets.images.selected_marker:draw(level.selected_entity.position)
-			end
 
 			love.graphics.pop()
 		end)

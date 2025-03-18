@@ -9,8 +9,9 @@ function Drawable:init(quad)
 	self.quad = quad
 end
 
-function Drawable:draw(position)
-	love.graphics.draw(Assets.images.tiles, self.quad, position.x - 16, position.y - 16)
+function Drawable:draw(position, rotation)
+	rotation = rotation or 0
+	love.graphics.draw(Assets.images.tiles, self.quad, position.x, position.y, rotation, 1, 1, 16, 16)
 end
 
 function Assets:load()
@@ -25,6 +26,8 @@ function Assets:load()
 	self.images.distract_command = Drawable(love.graphics.newQuad(224, 32, 32, 32, self.images.tiles))
 	self.images.distract_target = Drawable(love.graphics.newQuad(224, 64, 32, 32, self.images.tiles))
 	self.images.wait_command = Drawable(love.graphics.newQuad(128, 64, 32, 32, self.images.tiles))
+	self.images.firecracker = Drawable(love.graphics.newQuad(160, 64, 32, 32, self.images.tiles))
+	self.images.firecracker_dust = Drawable(love.graphics.newQuad(192, 64, 32, 32, self.images.tiles))
 end
 
 return Assets

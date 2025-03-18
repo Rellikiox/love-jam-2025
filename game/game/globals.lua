@@ -1,6 +1,7 @@
 require 'engine.object'
 require 'engine.vec2'
 require 'engine.utils'
+require 'game.settings'
 
 local Color = require 'engine.color'
 

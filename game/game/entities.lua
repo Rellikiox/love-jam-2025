@@ -4,6 +4,7 @@ local Physics = require 'game.physics'
 local Entity = Object:extend()
 
 function Entity:init(args)
+	self.alive = true
 	self.name = args.name
 	self.position = args.position
 	self.current_command = 1
