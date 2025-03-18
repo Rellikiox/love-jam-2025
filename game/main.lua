@@ -1,7 +1,7 @@
 require 'game.globals'
 local Assets = require 'game.assets'
 local Physics = require 'game.physics'
-local Entities = require 'game.entities'
+local Agents = require 'game.agents'
 local ldtk = require 'lib.ldtk'
 local Terebi = require 'lib.terebi'
 local Commands = require 'game.commands'
@@ -45,10 +45,10 @@ function Firecracker:init(args)
 		autostart = false,
 		callback = function()
 			local position = vec2 { self.body:getPosition() }
-			table.insert(level.entities, FirecrackerDust { position = position })
+			table.insert(level.agents, FirecrackerDust { position = position })
 			local neaby = Physics:get_entities_at(position, 100)
 			for _, ent in ipairs(neaby) do
-				local hearing = ent:get_component(Entities.Hearing)
+				local hearing = ent:get_component(Agents.Hearing)
 				if hearing then
 					hearing:process_noise({ position = position })
 				end
@@ -74,8 +74,9 @@ level = {
 	name = '',
 	offset = vec2.zero,
 	layers = {},
+	agents = {},
 	entities = {},
-	selected_entity = nil,
+	selected_agent = nil,
 	simulation_running = false,
 	mouse_position = function(self)
 		return vec2 { screen:getMousePosition() } - self.offset
@@ -97,7 +98,7 @@ local CusorMode = {
 local Cursor = {
 	hand = love.mouse.getSystemCursor("hand"),
 	arrow = love.mouse.getSystemCursor("arrow"),
-	selected_entity = nil,
+	selected_agent = nil,
 	mode = CusorMode.Select,
 	set_hand = function(self)
 		love.mouse.setCursor(self.hand)
@@ -110,7 +111,7 @@ local Cursor = {
 			local entities = Physics:get_entities_at(level:mouse_position())
 			for _, entity in ipairs(entities) do
 				if entity.is_goblin then
-					self.selected_entity = entities[1]
+					self.selected_agent = entities[1]
 					self:set_mode(CusorMode.MoveCommand)
 					break
 				end
@@ -120,7 +121,7 @@ local Cursor = {
 				-- Play sfx
 				return
 			end
-			self.selected_entity:add_command(self.next_command)
+			self.selected_agent:add_command(self.next_command)
 			self:set_mode(CusorMode.MoveCommand)
 		elseif self.mode == CusorMode.DistractCommand then
 			if not self:current_command_is_valid() then
@@ -134,7 +135,7 @@ local Cursor = {
 				-- Play sfx
 				return
 			end
-			self.selected_entity:add_command(self.next_command)
+			self.selected_agent:add_command(self.next_command)
 			self:set_mode(CusorMode.DistractCommand)
 		elseif self.mode == CusorMode.WaitCommand then
 			if not self:current_command_is_valid() then
@@ -144,16 +145,16 @@ local Cursor = {
 
 			self:set_mode(CusorMode.WaitTimer)
 		elseif self.mode == CusorMode.WaitTimer then
-			self.selected_entity:add_command(self.next_command)
+			self.selected_agent:add_command(self.next_command)
 			self:set_mode(CusorMode.WaitCommand)
 		end
 	end,
 	mouse_2_released = function(self)
-		self.selected_entity = nil
+		self.selected_agent = nil
 		self:set_mode(CusorMode.Select)
 	end,
 	set_mode = function(self, mode)
-		if mode ~= CusorMode.Select and not self.selected_entity then
+		if mode ~= CusorMode.Select and not self.selected_agent then
 			return
 		end
 
@@ -163,7 +164,7 @@ local Cursor = {
 			return
 		end
 
-		local source = self.selected_entity:next_command_position()
+		local source = self.selected_agent:next_command_position()
 		local destination = level:mouse_position()
 		if mode == CusorMode.MoveCommand then
 			self.next_command = Commands.Move { source = source, destination = destination }
@@ -180,21 +181,21 @@ local Cursor = {
 
 		local from, to
 		if self.mode == CusorMode.MoveCommand then
-			from = self.selected_entity:next_command_position()
+			from = self.selected_agent:next_command_position()
 			to = level:mouse_position()
 		elseif self.mode == CusorMode.DistractCommand then
-			from = self.selected_entity:next_command_position()
+			from = self.selected_agent:next_command_position()
 			to = level:mouse_position()
 		elseif self.mode == CusorMode.DistractTarget then
 			return true
 		elseif self.mode == CusorMode.WaitCommand then
-			from = self.selected_entity:next_command_position()
+			from = self.selected_agent:next_command_position()
 			to = level:mouse_position()
 		elseif self.mode == CusorMode.WaitTimer then
 			local length = (self.next_command.destination - level:mouse_position()):length()
 			return length >= 2
 		end
-		return (to - from):length() > 16 and Physics:is_line_unobstructed(from, to, self.selected_entity.radius)
+		return (to - from):length() > 16 and Physics:is_line_unobstructed(from, to, self.selected_agent.radius)
 	end,
 	draw = function(self)
 		if self.next_command then
@@ -206,8 +207,8 @@ local Cursor = {
 			self.next_command:draw_path()
 			self.next_command:draw_marker()
 		end
-		if self.selected_entity then
-			Assets.images.selected_marker:draw(self.selected_entity.position)
+		if self.selected_agent then
+			Assets.images.selected_marker:draw(self.selected_agent.position)
 		end
 	end,
 	update = function(self, delta)
@@ -232,10 +233,10 @@ local Cursor = {
 
 local cursor_mode_text = {
 	[CusorMode.Select] = function() return 'Now, who did I send next? ...' end,
-	[CusorMode.MoveCommand] = function() return Cursor.selected_entity.name .. ' should go here' end,
-	[CusorMode.DistractCommand] = function() return Cursor.selected_entity.name .. ' should walk here and then...' end,
+	[CusorMode.MoveCommand] = function() return Cursor.selected_agent.name .. ' should go here' end,
+	[CusorMode.DistractCommand] = function() return Cursor.selected_agent.name .. ' should walk here and then...' end,
 	[CusorMode.DistractTarget] = function() return 'throw a firecracker over here.' end,
-	[CusorMode.WaitCommand] = function() return Cursor.selected_entity.name .. ' should walk here and...' end,
+	[CusorMode.WaitCommand] = function() return Cursor.selected_agent.name .. ' should walk here and...' end,
 	[CusorMode.WaitTimer] = function() return 'wait for ' .. Cursor.next_command.wait_time .. ' seconds.' end,
 }
 
@@ -262,11 +263,11 @@ function ldtk.onEntity(ldtk_entity)
 	local components = {}
 	if ldtk_entity.props.Components then
 		for _, component_name in ipairs(ldtk_entity.props.Components) do
-			table.insert(components, Entities[component_name] {})
+			table.insert(components, Agents[component_name] {})
 		end
 	end
 
-	table.insert(level.entities, Entities.Entity {
+	table.insert(level.agents, Agents.Agent {
 		name = ldtk_entity.id,
 		position = vec2 { ldtk_entity.x, ldtk_entity.y },
 		quad = quad,
@@ -293,7 +294,7 @@ function ldtk.onLevelLoaded(ldtk_level)
 		(game_size.y - ldtk_level.height) / 2,
 	}
 	level.layers = {}
-	level.entities = {}
+	level.agents = {}
 	level.simulation_running = false
 	Cursor:set_mode(CusorMode.Select)
 	Physics:load()
@@ -330,11 +331,21 @@ function love.update(delta)
 
 	Physics.world:update(delta)
 
+
+
 	for i = #level.entities, 1, -1 do
 		local entity = level.entities[i]
 		entity:update(delta)
 		if not entity.alive then
 			table.remove(level.entities, i)
+		end
+	end
+
+	for i = #level.agents, 1, -1 do
+		local agent = level.agents[i]
+		agent:update(delta)
+		if not agent.alive then
+			table.remove(level.agents, i)
 		end
 	end
 end
@@ -371,12 +382,16 @@ function love.draw()
 			Cursor:draw()
 
 			for _, entity in ipairs(level.entities) do
-				if entity.commands then
-					entity:draw_commands(entity == Cursor.selected_entity)
+				entity:draw()
+			end
+
+			for _, agent in ipairs(level.agents) do
+				if agent.commands then
+					agent:draw_commands(agent == Cursor.selected_agent)
 				end
 			end
-			for _, entity in ipairs(level.entities) do
-				entity:draw()
+			for _, agent in ipairs(level.agents) do
+				agent:draw()
 			end
 
 			-- Colors.Red:set()
