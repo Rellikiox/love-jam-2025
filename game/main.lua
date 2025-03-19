@@ -94,7 +94,9 @@ local CusorMode = {
 	WaitCommand = 'Wait',
 	WaitTimer = 'Wait Time',
 	EditCommandPosition = 'Edit position',
-	EditCommandValue = 'Edit value'
+	EditCommandValue = 'Edit value',
+	ListenCommand = 'Listen',
+	ShoutCommand = 'Shout',
 }
 
 local Cursor = {
@@ -172,6 +174,20 @@ local Cursor = {
 			end
 		elseif self.mode == CusorMode.EditCommandValue then
 			self:set_mode(CusorMode.Select)
+		elseif self.mode == CusorMode.ListenCommand then
+			if not self:current_command_is_valid() then
+				-- Play sfx
+				return
+			end
+			self.selected_agent:add_command(self.next_command)
+			self:set_mode(CusorMode.ListenCommand)
+		elseif self.mode == CusorMode.ShoutCommand then
+			if not self:current_command_is_valid() then
+				-- Play sfx
+				return
+			end
+			self.selected_agent:add_command(self.next_command)
+			self:set_mode(CusorMode.ShoutCommand)
 		end
 	end,
 	mouse_2_released = function(self)
@@ -199,6 +215,10 @@ local Cursor = {
 			self.next_command = Commands.ThrowFirecracker { source = source, position = position }
 		elseif mode == CusorMode.WaitCommand then
 			self.next_command = Commands.Wait { source = source, position = position }
+		elseif mode == CusorMode.ListenCommand then
+			self.next_command = Commands.Listen { source = source, position = position }
+		elseif mode == CusorMode.ShoutCommand then
+			self.next_command = Commands.Shout { source = source, position = position }
 		end
 	end,
 	current_command_is_valid = function(self)
@@ -226,6 +246,12 @@ local Cursor = {
 			return true
 		elseif self.mode == CusorMode.EditCommandValue then
 			return true
+		elseif self.mode == CusorMode.ListenCommand then
+			from = self.selected_agent:next_command_source().position
+			to = level:mouse_position()
+		elseif self.mode == CusorMode.ShoutCommand then
+			from = self.selected_agent:next_command_source().position
+			to = level:mouse_position()
 		end
 		return (to - from):length() > 16 and Physics:is_line_unobstructed(from, to, self.selected_agent.radius)
 	end,
@@ -274,6 +300,10 @@ local Cursor = {
 					self.selected_command:set_wait_time(wait_time)
 				end
 			end
+		elseif self.mode == CusorMode.ListenCommand then
+			self.next_command.position = level:mouse_position()
+		elseif self.mode == CusorMode.ShoutCommand then
+			self.next_command.position = level:mouse_position()
 		end
 	end,
 	delete_current_command = function(self)
@@ -308,6 +338,14 @@ local cursor_mode_text = {
 	[CusorMode.WaitTimer] = function() return 'wait for ' .. Cursor.next_command.wait_time .. ' seconds.' end,
 	[CusorMode.EditCommandPosition] = function() return 'Actually, I changed my mind about this...' end,
 	[CusorMode.EditCommandValue] = function() return 'It should actually be...' end,
+	[CusorMode.ListenCommand] = function()
+		return Cursor.selected_agent.name ..
+			' should wait to hear from the others.'
+	end,
+	[CusorMode.ShoutCommand] = function()
+		return Cursor.selected_agent.name ..
+			' should let the other know they\'re ready.'
+	end,
 }
 
 function ldtk.onEntity(ldtk_entity)
@@ -489,6 +527,10 @@ function love.keyreleased(key)
 		Cursor:set_mode(CusorMode.DistractCommand)
 	elseif key == 'w' then
 		Cursor:set_mode(CusorMode.WaitCommand)
+	elseif key == 'h' then
+		Cursor:set_mode(CusorMode.ListenCommand)
+	elseif key == 's' then
+		Cursor:set_mode(CusorMode.ShoutCommand)
 	elseif key == 'delete' or key == 'backspace' then
 		Cursor:delete_current_command()
 	end

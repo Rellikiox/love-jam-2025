@@ -160,7 +160,8 @@ end
 
 function WaitComand:update(delta)
 	if not self.arrived then
-		self.arrived = MoveCommand.update(self, delta)
+		local move_state = MoveCommand.update(self, delta)
+		self.arrived = move_state == CommandState.Finished
 	else
 		self.wait_timer:increment(delta)
 		if self.finished then
@@ -170,11 +171,56 @@ function WaitComand:update(delta)
 	return CommandState.Running
 end
 
--- WaitSignalCommand
+local ListenComand = MoveCommand:extend()
 
--- SendSignalCommand
+function ListenComand:init(args)
+	MoveCommand.init(self, args)
 
+	self.arrived = false
+	self.heard = false
+	Events:listen(self, 'shout', function()
+		self.heard = true
+	end)
+end
 
+function ListenComand:draw_marker()
+	Assets.images.listen_command:draw(self.position)
+end
+
+function ListenComand:update(delta)
+	if not self.arrived then
+		local move_state = MoveCommand.update(self, delta)
+		self.arrived = move_state == CommandState.Finished
+	else
+		if self.heard then
+			return CommandState.Finished
+		end
+	end
+	return CommandState.Running
+end
+
+local ShoutComand = MoveCommand:extend()
+
+function ShoutComand:init(args)
+	MoveCommand.init(self, args)
+
+	self.arrived = false
+end
+
+function ShoutComand:draw_marker()
+	Assets.images.shout_command:draw(self.position)
+end
+
+function ShoutComand:update(delta)
+	if not self.arrived then
+		local move_state = MoveCommand.update(self, delta)
+		self.arrived = move_state == CommandState.Finished
+	else
+		Events:send('shout')
+		return CommandState.Finished
+	end
+	return CommandState.Running
+end
 
 local InvestigateCommand = MoveCommand:extend()
 
@@ -228,5 +274,7 @@ return {
 	ThrowFirecracker = ThrowFirecrackerComand,
 	Wait = WaitComand,
 	Investigate = InvestigateCommand,
-	State = CommandState
+	State = CommandState,
+	Shout = ShoutComand,
+	Listen = ListenComand
 }
