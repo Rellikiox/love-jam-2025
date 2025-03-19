@@ -87,11 +87,11 @@ function Agent:add_command(command, position)
 	table.insert(self.commands, position, command)
 end
 
-function Agent:next_command_position()
+function Agent:next_command_source()
 	if #self.commands == 0 then
-		return self.position
+		return self
 	end
-	return self.commands[#self.commands].destination
+	return self.commands[#self.commands]
 end
 
 function Agent:get_component(component_type)

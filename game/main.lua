@@ -92,13 +92,16 @@ local CusorMode = {
 	DistractCommand = 'Distract',
 	DistractTarget = 'Distract Target',
 	WaitCommand = 'Wait',
-	WaitTimer = 'Wait Time'
+	WaitTimer = 'Wait Time',
+	EditCommandPosition = 'Edit position',
+	EditCommandValue = 'Edit value'
 }
 
 local Cursor = {
 	hand = love.mouse.getSystemCursor("hand"),
 	arrow = love.mouse.getSystemCursor("arrow"),
 	selected_agent = nil,
+	selected_command = nil,
 	mode = CusorMode.Select,
 	set_hand = function(self)
 		love.mouse.setCursor(self.hand)
@@ -108,12 +111,26 @@ local Cursor = {
 	end,
 	mouse_1_released = function(self)
 		if self.mode == CusorMode.Select then
-			local entities = Physics:get_entities_at(level:mouse_position())
-			for _, entity in ipairs(entities) do
-				if entity.is_goblin then
-					self.selected_agent = entities[1]
+			-- Look for an agent first
+			for _, agent in ipairs(level.agents) do
+				if agent.position:distance(level:mouse_position()) <= agent.radius then
+					self.selected_agent = agent
 					self:set_mode(CusorMode.MoveCommand)
-					break
+					return
+				end
+			end
+
+			-- Otherwise look for a command
+
+			for _, agent in ipairs(level.agents) do
+				if agent.is_goblin then
+					for _, command in ipairs(agent.commands) do
+						if command.position:distance(level:mouse_position()) <= 10 then
+							self.selected_command = command
+							self:set_mode(CusorMode.EditCommandPosition)
+							return
+						end
+					end
 				end
 			end
 		elseif self.mode == CusorMode.MoveCommand then
@@ -147,6 +164,14 @@ local Cursor = {
 		elseif self.mode == CusorMode.WaitTimer then
 			self.selected_agent:add_command(self.next_command)
 			self:set_mode(CusorMode.WaitCommand)
+		elseif self.mode == CusorMode.EditCommandPosition then
+			if self.selected_command:is(Commands.ThrowFirecracker) or self.selected_command:is(Commands.Wait) then
+				self:set_mode(CusorMode.EditCommandValue)
+			else
+				self:set_mode(CusorMode.Select)
+			end
+		elseif self.mode == CusorMode.EditCommandValue then
+			self:set_mode(CusorMode.Select)
 		end
 	end,
 	mouse_2_released = function(self)
@@ -154,24 +179,26 @@ local Cursor = {
 		self:set_mode(CusorMode.Select)
 	end,
 	set_mode = function(self, mode)
-		if mode ~= CusorMode.Select and not self.selected_agent then
-			return
-		end
-
 		self.mode = mode
 		if mode == CusorMode.Select then
 			self.next_command = nil
+			self.selected_agent = nil
+			self.selected_command = nil
+			return
+		elseif mode == CusorMode.EditCommandPosition then
+			return
+		elseif mode == CusorMode.EditCommandValue then
 			return
 		end
 
-		local source = self.selected_agent:next_command_position()
-		local destination = level:mouse_position()
+		local source = self.selected_agent:next_command_source()
+		local position = level:mouse_position()
 		if mode == CusorMode.MoveCommand then
-			self.next_command = Commands.Move { source = source, destination = destination }
+			self.next_command = Commands.Move { source = source, position = position }
 		elseif mode == CusorMode.DistractCommand then
-			self.next_command = Commands.ThrowFirecracker { source = source, destination = destination }
+			self.next_command = Commands.ThrowFirecracker { source = source, position = position }
 		elseif mode == CusorMode.WaitCommand then
-			self.next_command = Commands.Wait { source = source, destination = destination }
+			self.next_command = Commands.Wait { source = source, position = position }
 		end
 	end,
 	current_command_is_valid = function(self)
@@ -181,19 +208,24 @@ local Cursor = {
 
 		local from, to
 		if self.mode == CusorMode.MoveCommand then
-			from = self.selected_agent:next_command_position()
+			from = self.selected_agent:next_command_source().position
 			to = level:mouse_position()
 		elseif self.mode == CusorMode.DistractCommand then
-			from = self.selected_agent:next_command_position()
+			from = self.selected_agent:next_command_source().position
 			to = level:mouse_position()
 		elseif self.mode == CusorMode.DistractTarget then
 			return true
 		elseif self.mode == CusorMode.WaitCommand then
-			from = self.selected_agent:next_command_position()
+			from = self.selected_agent:next_command_source().position
 			to = level:mouse_position()
 		elseif self.mode == CusorMode.WaitTimer then
-			local length = (self.next_command.destination - level:mouse_position()):length()
+			local length = (self.next_command.position - level:mouse_position()):length()
 			return length >= 2
+		elseif self.mode == CusorMode.EditCommandPosition then
+			-- TODO check that we don't overlap any walls with before and after commands
+			return true
+		elseif self.mode == CusorMode.EditCommandValue then
+			return true
 		end
 		return (to - from):length() > 16 and Physics:is_line_unobstructed(from, to, self.selected_agent.radius)
 	end,
@@ -210,23 +242,59 @@ local Cursor = {
 		if self.selected_agent then
 			Assets.images.selected_marker:draw(self.selected_agent.position)
 		end
+		if self.selected_command then
+			Assets.images.selected_marker:draw(self.selected_command.position + vec2 { 0, 10 })
+		end
 	end,
 	update = function(self, delta)
 		if self.mode == CusorMode.Select then
 		elseif self.mode == CusorMode.MoveCommand then
-			self.next_command.destination = level:mouse_position()
+			self.next_command.position = level:mouse_position()
 		elseif self.mode == CusorMode.DistractCommand then
-			self.next_command.destination = level:mouse_position()
+			self.next_command.position = level:mouse_position()
 		elseif self.mode == CusorMode.DistractTarget then
 			self.next_command.target = level:mouse_position()
 		elseif self.mode == CusorMode.WaitCommand then
-			self.next_command.destination = level:mouse_position()
+			self.next_command.position = level:mouse_position()
 		elseif self.mode == CusorMode.WaitTimer then
-			local wait_time = (self.next_command.destination - level:mouse_position()):length() / 20
+			local wait_time = (self.next_command.position - level:mouse_position()):length() / 20
 			if wait_time >= 0.1 then
 				local wait_time = math.min(wait_time, 5.0)
 				self.next_command:set_wait_time(wait_time)
 			end
+		elseif self.mode == CusorMode.EditCommandPosition then
+			self.selected_command.position = level:mouse_position()
+		elseif self.mode == CusorMode.EditCommandValue then
+			if self.selected_command:is(Commands.ThrowFirecracker) then
+				self.selected_command.target = level:mouse_position()
+			elseif self.selected_command:is(Commands.Wait) then
+				local wait_time = (self.selected_command.position - level:mouse_position()):length() / 20
+				if wait_time >= 0.1 then
+					local wait_time = math.min(wait_time, 5.0)
+					self.selected_command:set_wait_time(wait_time)
+				end
+			end
+		end
+	end,
+	delete_current_command = function(self)
+		if self.selected_command then
+			local source = self.selected_command.source
+			while source.source do
+				source = source.source
+			end
+			-- source is entity owning commands
+			for index = 1, #source.commands do
+				if source.commands[index] == self.selected_command then
+					if index ~= #source.commands then
+						local previous = self.selected_command.source
+						local next = source.commands[index + 1]
+						next.source = previous
+					end
+					table.remove(source.commands, index)
+				end
+			end
+			self.selected_command = nil
+			self:set_mode(CusorMode.Select)
 		end
 	end
 }
@@ -238,6 +306,8 @@ local cursor_mode_text = {
 	[CusorMode.DistractTarget] = function() return 'throw a firecracker over here.' end,
 	[CusorMode.WaitCommand] = function() return Cursor.selected_agent.name .. ' should walk here and...' end,
 	[CusorMode.WaitTimer] = function() return 'wait for ' .. Cursor.next_command.wait_time .. ' seconds.' end,
+	[CusorMode.EditCommandPosition] = function() return 'Actually, I changed my mind about this...' end,
+	[CusorMode.EditCommandValue] = function() return 'It should actually be...' end,
 }
 
 function ldtk.onEntity(ldtk_entity)
@@ -419,6 +489,8 @@ function love.keyreleased(key)
 		Cursor:set_mode(CusorMode.DistractCommand)
 	elseif key == 'w' then
 		Cursor:set_mode(CusorMode.WaitCommand)
+	elseif key == 'delete' or key == 'backspace' then
+		Cursor:delete_current_command()
 	end
 end
 

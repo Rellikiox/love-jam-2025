@@ -9,10 +9,9 @@ local CommandState = {
 
 local Command = Object:extend()
 
-
 function Command:draw_path()
 	love.graphics.setLineWidth(3)
-	love.graphics.line(self.source.x, self.source.y, self.destination.x, self.destination.y)
+	love.graphics.line(self.source.position.x, self.source.position.y, self.position.x, self.position.y)
 	love.graphics.setLineWidth(1)
 end
 
@@ -21,18 +20,18 @@ local MoveCommand = Command:extend()
 function MoveCommand:init(args)
 	Command.init(self, args)
 	self.source = args.source
-	self.destination = args.destination
+	self.position = args.position
 end
 
 function MoveCommand:draw_marker()
-	Assets.images.move_command:draw(self.destination)
+	Assets.images.move_command:draw(self.position)
 end
 
 function MoveCommand:update(delta)
-	local direction = (self.destination - self.entity.position):normalized()
+	local direction = (self.position - self.entity.position):normalized()
 	self.entity.position = self.entity.position + direction * self.entity.speed * delta
 	self.entity.body:setPosition(self.entity.position.x, self.entity.position.y)
-	if (self.destination - self.entity.position):length() < 1 then
+	if (self.position - self.entity.position):length() < 1 then
 		return CommandState.Finished
 	end
 	return CommandState.Running
@@ -66,11 +65,11 @@ function PatrolCommand:draw_marker()
 end
 
 function PatrolCommand:update(delta)
-	local destination = self.points[self.target_point]
-	local direction = (destination - self.entity.position):normalized()
+	local position = self.points[self.target_point]
+	local direction = (position - self.entity.position):normalized()
 	self.entity.position = self.entity.position + direction * self.entity.speed * delta
 	self.entity.body:setPosition(self.entity.position.x, self.entity.position.y)
-	if (destination - self.entity.position):length() < 1 then
+	if (position - self.entity.position):length() < 1 then
 		local prev = self.target_point
 		self.target_point = math.fmod(self.target_point, #self.points) + 1
 	end
@@ -89,7 +88,7 @@ function ThrowFirecrackerComand:init(args)
 		autostart = false,
 		timeout = 1.0,
 		callback = function()
-			Events:send('launch-firecracker', self.destination, self.target)
+			Events:send('launch-firecracker', self.position, self.target)
 		end
 	}
 end
@@ -97,12 +96,12 @@ end
 function ThrowFirecrackerComand:draw_path()
 	Command.draw_path(self)
 	if self.target then
-		love.graphics.line(self.destination.x, self.destination.y, self.target.x, self.target.y)
+		love.graphics.line(self.position.x, self.position.y, self.target.x, self.target.y)
 	end
 end
 
 function ThrowFirecrackerComand:draw_marker()
-	Assets.images.distract_command:draw(self.destination)
+	Assets.images.distract_command:draw(self.position)
 	if self.target then
 		Assets.images.distract_target:draw(self.target)
 		love.graphics.circle('line', self.target.x, self.target.y, 100)
@@ -149,11 +148,11 @@ function WaitComand:draw_marker()
 	local offset = (self.arrived and not self.finished) and vec2 { 0, -20 } or vec2.zero
 
 	Colors.FullWhite:set()
-	Assets.images.wait_command:draw(self.destination + offset)
+	Assets.images.wait_command:draw(self.position + offset)
 
 	Colors.Black:set()
 	love.graphics.setFont(FontTiny)
-	local point = (self.destination + offset):floor()
+	local point = (self.position + offset):floor()
 	Colors.White:set()
 	love.graphics.print(string.format("%.1f", self.wait_timer.timeout - self.wait_timer.elapsed), point.x - 7,
 		point.y - 12)
