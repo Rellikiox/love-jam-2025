@@ -269,6 +269,17 @@ function InvestigateCommand:update(delta)
 	return CommandState.Running
 end
 
+local InteractCommand = MoveCommand:extend()
+
+function InteractCommand:init(args)
+	MoveCommand.init(self, args)
+	self.object = args.object
+end
+
+function InteractCommand:draw_marker()
+	Assets.images.interact_command:draw(self.position)
+end
+
 return {
 	Move = MoveCommand,
 	Patrol = PatrolCommand,
@@ -277,5 +288,6 @@ return {
 	Investigate = InvestigateCommand,
 	State = CommandState,
 	Shout = ShoutComand,
-	Listen = ListenComand
+	Listen = ListenComand,
+	Interact = InteractCommand
 }

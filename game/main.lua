@@ -189,6 +189,13 @@ local Cursor = {
 			end
 			self.selected_agent:add_command(self.next_command)
 			self:set_mode(CusorMode.ShoutCommand)
+		elseif self.mode == CusorMode.InteractCommand then
+			if not self:current_command_is_valid() then
+				-- Play sfx
+				return
+			end
+			self.selected_agent:add_command(self.next_command)
+			self:set_mode(CusorMode.InteractCommand)
 		end
 	end,
 	mouse_2_released = function(self)
@@ -220,6 +227,8 @@ local Cursor = {
 			self.next_command = Commands.Listen { source = source, position = position }
 		elseif mode == CusorMode.ShoutCommand then
 			self.next_command = Commands.Shout { source = source, position = position }
+		elseif mode == CusorMode.InteractCommand then
+			self.next_command = Commands.Interact { source = source, position = position }
 		end
 	end,
 	current_command_is_valid = function(self)
@@ -251,6 +260,9 @@ local Cursor = {
 			from = self.selected_agent:next_command_source().position
 			to = level:mouse_position()
 		elseif self.mode == CusorMode.ShoutCommand then
+			from = self.selected_agent:next_command_source().position
+			to = level:mouse_position()
+		elseif self.mode == CusorMode.InteractCommand then
 			from = self.selected_agent:next_command_source().position
 			to = level:mouse_position()
 		end
@@ -313,6 +325,8 @@ local Cursor = {
 			self.next_command.position = level:mouse_position()
 		elseif self.mode == CusorMode.ShoutCommand then
 			self.next_command.position = level:mouse_position()
+		elseif self.mode == CusorMode.InteractCommand then
+			self.next_command.position = level:mouse_position()
 		end
 	end,
 	delete_current_command = function(self)
@@ -351,6 +365,9 @@ local cursor_mode_text = {
 	[CusorMode.ShoutCommand] = function()
 		return Cursor.selected_agent.name ..
 			' should let the other know they\'re ready.'
+	end,
+	[CusorMode.InteractCommand] = function()
+		return Cursor.selected_agent.name .. ' should interact with this item'
 	end,
 }
 
@@ -537,6 +554,8 @@ function love.keyreleased(key)
 		Cursor:set_mode(CusorMode.ListenCommand)
 	elseif key == 's' then
 		Cursor:set_mode(CusorMode.ShoutCommand)
+	elseif key == 'e' then
+		Cursor:set_mode(CusorMode.InteractCommand)
 	elseif key == 'delete' or key == 'backspace' then
 		Cursor:delete_current_command()
 	end

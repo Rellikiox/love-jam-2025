@@ -31,6 +31,7 @@ function Assets:load()
 	self.images.investigate_command = Drawable(love.graphics.newQuad(128, 96, 32, 32, self.images.tiles))
 	self.images.listen_command = Drawable(love.graphics.newQuad(160, 96, 32, 32, self.images.tiles))
 	self.images.shout_command = Drawable(love.graphics.newQuad(192, 96, 32, 32, self.images.tiles))
+	self.images.interact_command = Drawable(love.graphics.newQuad(224, 96, 32, 32, self.images.tiles))
 end
 
 return Assets
