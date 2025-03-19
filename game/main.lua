@@ -89,14 +89,15 @@ level = {
 local CusorMode = {
 	Select = 'Select',
 	MoveCommand = 'Move',
-	DistractCommand = 'Distract',
-	DistractTarget = 'Distract Target',
+	DistractCommand = 'Firecracker From',
+	DistractTarget = 'Firecracker To',
 	WaitCommand = 'Wait',
 	WaitTimer = 'Wait Time',
 	EditCommandPosition = 'Edit position',
-	EditCommandValue = 'Edit value',
+	EditCommandValue = 'Edit Value',
 	ListenCommand = 'Listen',
 	ShoutCommand = 'Shout',
+	InteractCommand = 'Interact',
 }
 
 local Cursor = {
@@ -271,6 +272,14 @@ local Cursor = {
 		if self.selected_command then
 			Assets.images.selected_marker:draw(self.selected_command.position + vec2 { 0, 10 })
 		end
+
+		local position = level:mouse_position():floor()
+		love.graphics.setFont(FontTiny)
+		Colors.Black:set()
+		love.graphics.rectangle("fill", position.x + 12, position.y - 3, FontTiny:getWidth(self.mode) + 5, 13)
+		Colors.White:set()
+		love.graphics.print(self.mode, position.x + 15, position.y - 5
+		)
 	end,
 	update = function(self, delta)
 		if self.mode == CusorMode.Select then
@@ -308,19 +317,16 @@ local Cursor = {
 	end,
 	delete_current_command = function(self)
 		if self.selected_command then
-			local source = self.selected_command.source
-			while source.source do
-				source = source.source
-			end
+			local agent = self.selected_command.agent
 			-- source is entity owning commands
-			for index = 1, #source.commands do
-				if source.commands[index] == self.selected_command then
-					if index ~= #source.commands then
+			for index = 1, #agent.commands do
+				if agent.commands[index] == self.selected_command then
+					if index ~= #agent.commands then
 						local previous = self.selected_command.source
-						local next = source.commands[index + 1]
+						local next = agent.commands[index + 1]
 						next.source = previous
 					end
-					table.remove(source.commands, index)
+					table.remove(agent.commands, index)
 				end
 			end
 			self.selected_command = nil

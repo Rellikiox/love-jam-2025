@@ -7,6 +7,7 @@ local CommandState = {
 	Destroy = 'destroy'
 }
 
+
 local Command = Object:extend()
 
 function Command:draw_path()
@@ -28,10 +29,10 @@ function MoveCommand:draw_marker()
 end
 
 function MoveCommand:update(delta)
-	local direction = (self.position - self.entity.position):normalized()
-	self.entity.position = self.entity.position + direction * self.entity.speed * delta
-	self.entity.body:setPosition(self.entity.position.x, self.entity.position.y)
-	if (self.position - self.entity.position):length() < 1 then
+	local direction = (self.position - self.agent.position):normalized()
+	self.agent.position = self.agent.position + direction * self.agent.speed * delta
+	self.agent.body:setPosition(self.agent.position.x, self.agent.position.y)
+	if (self.position - self.agent.position):length() < 1 then
 		return CommandState.Finished
 	end
 	return CommandState.Running
@@ -66,10 +67,10 @@ end
 
 function PatrolCommand:update(delta)
 	local position = self.points[self.target_point]
-	local direction = (position - self.entity.position):normalized()
-	self.entity.position = self.entity.position + direction * self.entity.speed * delta
-	self.entity.body:setPosition(self.entity.position.x, self.entity.position.y)
-	if (position - self.entity.position):length() < 1 then
+	local direction = (position - self.agent.position):normalized()
+	self.agent.position = self.agent.position + direction * self.agent.speed * delta
+	self.agent.body:setPosition(self.agent.position.x, self.agent.position.y)
+	if (position - self.agent.position):length() < 1 then
 		local prev = self.target_point
 		self.target_point = math.fmod(self.target_point, #self.points) + 1
 	end
@@ -250,10 +251,10 @@ end
 function InvestigateCommand:update(delta)
 	if self.path_index <= #self.path then
 		local target = self.path[self.path_index]
-		local direction = (target - self.entity.position):normalized()
-		self.entity.position = self.entity.position + direction * self.entity.speed * delta
-		self.entity.body:setPosition(self.entity.position.x, self.entity.position.y)
-		if (target - self.entity.position):length() < 1 then
+		local direction = (target - self.agent.position):normalized()
+		self.agent.position = self.agent.position + direction * self.agent.speed * delta
+		self.agent.body:setPosition(self.agent.position.x, self.agent.position.y)
+		if (target - self.agent.position):length() < 1 then
 			self.path_index = self.path_index + 1
 			if self.path_index > #self.path then
 				self.wait_timer:start()

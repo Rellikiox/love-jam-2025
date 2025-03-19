@@ -83,13 +83,13 @@ end
 
 function Agent:add_command(command, position)
 	position = position or #self.commands + 1
-	command.entity = self
+	command.agent = self
 	table.insert(self.commands, position, command)
 end
 
 function Agent:next_command_source()
 	if #self.commands == 0 then
-		return self
+		return { position = self.position }
 	end
 	return self.commands[#self.commands]
 end
