@@ -8,7 +8,7 @@ local Commands = require 'game.commands'
 local Events = require 'engine.events'
 
 game_size = vec2 { 800, 600 }
-local level
+level = nil
 
 local PressurePlate = Object:extend()
 
@@ -118,9 +118,9 @@ function Firecracker:init(args)
 	self.body:setLinearDamping(5)
 	local ang = (math.random() - 0.5) * math.pi * 2
 	self.body:setAngularVelocity(ang)
-
 	self.body:setAngularDamping(1)
 	self.fixture:setRestitution(0.9)
+	self.fixture:setGroupIndex(-1)
 
 	self.alive = true
 	self.timer = Timer {
@@ -130,10 +130,9 @@ function Firecracker:init(args)
 			local position = vec2 { self.body:getPosition() }
 			table.insert(level.agents, FirecrackerDust { position = position })
 			local neaby = Physics:get_entities_at(position, 100)
-			for _, ent in ipairs(neaby) do
-				local hearing = ent:get_component(Agents.Hearing)
-				if hearing then
-					hearing:process_noise({ position = position })
+			for _, agent in ipairs(neaby) do
+				if agent.components.hearing then
+					agent.components.hearing:process_noise({ position = position })
 				end
 			end
 			self.alive = false
@@ -286,18 +285,25 @@ local Cursor = {
 		self:set_mode(CusorMode.Select)
 	end,
 	set_mode = function(self, mode)
-		self.mode = mode
 		if mode == CusorMode.Select then
+			self.mode = mode
 			self.next_command = nil
 			self.selected_agent = nil
 			self.selected_command = nil
 			return
 		elseif mode == CusorMode.EditCommandPosition then
+			self.mode = mode
 			return
 		elseif mode == CusorMode.EditCommandValue then
+			self.mode = mode
 			return
 		end
 
+		if not self.selected_agent then
+			return
+		end
+
+		self.mode = mode
 		local source = self.selected_agent:next_command_source()
 		local position = level:mouse_position()
 		if mode == CusorMode.MoveCommand then
@@ -490,6 +496,7 @@ function ldtk.onEntity(ldtk_entity)
 	local quad
 	local commands = {}
 	local components = {}
+	local speed = 6000
 	if ldtk_entity.id == 'Sneaky' then
 		quad = Assets.images.sneaky
 	elseif ldtk_entity.id == 'Brute' then
@@ -507,15 +514,10 @@ function ldtk.onEntity(ldtk_entity)
 		end
 
 		table.insert(components, Agents.Hearing {})
-		table.insert(components, Agents.Vision { range = 100, angle = math.pi / 4 })
+		table.insert(components, Agents.Vision { range = 100, angle = math.pi })
 		table.insert(components, Agents.Capture { range = 20 })
 		table.insert(components, Agents.BeingNosy {})
-	end
-
-	if ldtk_entity.props.Components then
-		for _, component_name in ipairs(ldtk_entity.props.Components) do
-			table.insert(components, Agents[component_name] {})
-		end
+		speed = 5000
 	end
 
 	table.insert(level.agents, Agents.Agent {
@@ -525,7 +527,8 @@ function ldtk.onEntity(ldtk_entity)
 		radius = ldtk_entity.width / 2,
 		is_goblin = ldtk_entity.id ~= 'Enemy',
 		commands = commands,
-		components = components
+		components = components,
+		speed = speed
 	})
 end
 
@@ -591,15 +594,14 @@ function love.update(delta)
 		entity:update(delta)
 		if not entity.alive then
 			table.remove(level.entities, i)
+			if entity.body then
+				entity.body:destroy()
+			end
 		end
 	end
 
-	for i = #level.agents, 1, -1 do
-		local agent = level.agents[i]
+	for _, agent in ipairs(level.agents) do
 		agent:update(delta)
-		if not agent.alive then
-			table.remove(level.agents, i)
-		end
 	end
 end
 

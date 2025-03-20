@@ -50,7 +50,6 @@ function Physics:is_line_unobstructed(from, to)
 		end
 		return -1
 	end)
-	print(collisions, collides)
 	return not collides
 end
 

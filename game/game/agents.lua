@@ -14,11 +14,11 @@ function Agent:init(args)
 	self.quad = args.quad
 	self.radius = args.radius
 	self.is_goblin = args.is_goblin
-	self.speed = 6000
+	self.speed = args.speed
 	self.components = {}
 	for _, component in ipairs(args.components) do
 		component.parent = self
-		table.insert(self.components, component)
+		self.components[component.name] = component
 	end
 	self.commands = {}
 	for _, command in ipairs(args.commands or {}) do
@@ -36,12 +36,12 @@ end
 
 function Agent:update(delta)
 	self.position = vec2 { self.body:getPosition() }
-	self.direction = vec2 { self.body:getLinearVelocity() }:normalized()
-	if self.direction == vec2.zero then
-		self.direction = vec2.left
+	local new_direction = vec2 { self.body:getLinearVelocity() }:normalized()
+	if new_direction ~= vec2.zero then
+		self.direction = new_direction
 	end
 
-	for _, component in ipairs(self.components) do
+	for _, component in pairs(self.components) do
 		component:update(delta)
 	end
 
@@ -58,7 +58,7 @@ function Agent:update(delta)
 end
 
 function Agent:draw()
-	for _, component in ipairs(self.components) do
+	for _, component in pairs(self.components) do
 		component:draw()
 	end
 	love.graphics.draw(
@@ -103,17 +103,10 @@ function Agent:next_command_source()
 	return self.commands[#self.commands]
 end
 
-function Agent:get_component(component_type)
-	for _, component in ipairs(self.components) do
-		if component:is(component_type) then
-			return component
-		end
-	end
-end
-
 local Component = Object:extend()
 
 function Component:init(args)
+	self.name = 'component'
 end
 
 function Component:update(delta)
@@ -125,15 +118,33 @@ end
 local BeingNosyComponent = Component:extend()
 
 function BeingNosyComponent:init(args)
+	self.name = 'nosy'
 end
 
 function BeingNosyComponent:update(delta)
-	-- self.parent:add_command(Commands.Investigate { path = { self.parent.position, noise.position } }, 1)
+	local target = nil
+	if #self.parent.components.vision.entities_in_vision > 0 then
+		target = self.parent.components.vision.entities_in_vision[1].position
+	elseif #self.parent.components.hearing.noises > 0 then
+		target = self.parent.components.hearing.noises[1].position
+	end
+
+	if target then
+		if self.investigation_command and self.investigation_command.path[#self.investigation_command.path] ~= target then
+			self.investigation_command = nil
+			table.remove(self.parent.commands, 1)
+		end
+		if not self.investigation_command then
+			self.investigation_command = Commands.Investigate { path = { target } }
+			self.parent:add_command(self.investigation_command, 1)
+		end
+	end
 end
 
 local HearingComponent = Component:extend()
 
 function HearingComponent:init(args)
+	self.name = 'hearing'
 	self.parent = nil
 	self.noises = {}
 end
@@ -145,6 +156,7 @@ end
 local VisionComponent = Component:extend()
 
 function VisionComponent:init(args)
+	self.name = 'vision'
 	self.range = args.range
 	self.angle = args.angle
 	self.entities_in_vision = {}
@@ -158,11 +170,9 @@ function VisionComponent:update(delta)
 		if entity.is_goblin then
 			local to_entity = entity.position - self.parent.position
 			local angle_to_entity = to_entity:angle_between(self.parent.direction)
-			local angle = self.parent.direction:angle()
-			if math.abs(angle - angle_to_entity) <= self.angle / 2 then
+			if math.abs(angle_to_entity) <= self.angle / 2 then
 				if Physics:is_line_unobstructed(self.parent.position, entity.position) then
 					table.insert(self.entities_in_vision, entity)
-					print('see you')
 				end
 			end
 		end
@@ -171,7 +181,6 @@ end
 
 function VisionComponent:draw()
 	Colors.Red:with_alpha(0.3):set()
-
 	local angle = self.parent.direction:angle()
 	love.graphics.arc("fill", self.parent.position.x, self.parent.position.y, self.range,
 		angle - self.angle / 2,
@@ -183,6 +192,7 @@ end
 local CaptureComponent = Component:extend()
 
 function CaptureComponent:init(args)
+	self.name = 'capture'
 	self.range = args.range
 	self.parent = nil
 end
@@ -209,6 +219,5 @@ return {
 	Hearing = HearingComponent,
 	Vision = VisionComponent,
 	Capture = CaptureComponent,
-	BeingNosy =
-		BeingNosyComponent
+	BeingNosy = BeingNosyComponent
 }

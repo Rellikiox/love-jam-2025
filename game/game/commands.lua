@@ -242,7 +242,9 @@ end
 
 function InvestigateCommand:draw_path()
 	love.graphics.setLineWidth(1)
-	love.graphics.line(unpack(self.draw_points))
+	self.draw_points[1] = self.agent.position.x
+	self.draw_points[2] = self.agent.position.y
+	love.graphics.line(self.agent.position.x, self.agent.position.y, self.path[1].x, self.path[1].y)
 end
 
 function InvestigateCommand:draw_marker()
@@ -252,15 +254,18 @@ end
 function InvestigateCommand:update(delta)
 	if self.path_index <= #self.path then
 		local target = self.path[self.path_index]
-		local direction = (target - self.agent.position):normalized()
-		self.agent.position = self.agent.position + direction * self.agent.speed * delta
-		self.agent.body:setPosition(self.agent.position.x, self.agent.position.y)
-		if (target - self.agent.position):length() < 1 then
+		while (target - self.agent.position):length() < 1 do
 			self.path_index = self.path_index + 1
 			if self.path_index > #self.path then
 				self.wait_timer:start()
+				return
 			end
+			target = self.path[self.path_index]
 		end
+
+		local direction = (target - self.agent.position):normalized()
+		local force = direction * self.agent.speed * delta
+		self.agent.body:applyForce(force.x, force.y)
 	else
 		self.wait_timer:increment(delta)
 		if self.wait_timer.finished then
