@@ -12,10 +12,8 @@ local Command = Object:extend()
 
 function Command:draw_path()
 	love.graphics.setLineWidth(3)
-	if self.path then
-		for index = 1, #self.path - 1 do
-			love.graphics.line(self.path[index].x, self.path[index].y, self.path[index + 1].x, self.path[index + 1].y)
-		end
+	if self.draw_points then
+		love.graphics.line(unpack(self.draw_points))
 	else
 		love.graphics.line(self.source.position.x, self.source.position.y, self.position.x, self.position.y)
 	end
@@ -27,8 +25,18 @@ local MoveCommand = Command:extend()
 function MoveCommand:init(args)
 	Command.init(self, args)
 	self.source = args.source
-	self.path = args.path
+	self:set_path({})
+	self.path_index = 1
 	self.position = args.position
+end
+
+function MoveCommand:set_path(path)
+	self.path = path
+	self.draw_points = {}
+	for _, point in ipairs(self.path) do
+		table.insert(self.draw_points, point.x)
+		table.insert(self.draw_points, point.y)
+	end
 end
 
 function MoveCommand:draw_marker()
@@ -36,13 +44,22 @@ function MoveCommand:draw_marker()
 end
 
 function MoveCommand:update(delta)
-	local direction = (self.position - self.agent.position):normalized()
-	local force = direction * self.agent.speed * delta
-	self.agent.body:applyForce(force.x, force.y)
-	if (self.position - self.agent.position):length() < 1 then
-		return CommandState.Finished
+	if self.path_index <= #self.path then
+		local target = self.path[self.path_index]
+		while (target - self.agent.position):length() < 1 do
+			self.path_index = self.path_index + 1
+			if self.path_index > #self.path then
+				return CommandState.Finished
+			end
+			target = self.path[self.path_index]
+		end
+
+		local direction = (target - self.agent.position):normalized()
+		local force = direction * self.agent.speed * delta
+		self.agent.body:applyForce(force.x, force.y)
+		return CommandState.Running
 	end
-	return CommandState.Running
+	return CommandState.Finished
 end
 
 local PatrolCommand = Command:extend()
@@ -234,10 +251,7 @@ end
 local InvestigateCommand = MoveCommand:extend()
 
 function InvestigateCommand:init(args)
-	Command.init(self, args)
-
-	self.path = args.path
-	self.path_index = 1
+	MoveCommand.init(self, args)
 
 	self.draw_points = {}
 	for _, point in ipairs(self.path) do

@@ -358,7 +358,7 @@ local Cursor = {
 			from = self.selected_agent:next_command_source().position
 			to = level:mouse_position()
 		end
-		return (to - from):length() > 16 and Physics:is_line_unobstructed(from, to, self.selected_agent.radius)
+		return level.pathfinding:get_path(from, to) ~= nil
 	end,
 	draw = function(self)
 		if self.next_command then
@@ -386,16 +386,24 @@ local Cursor = {
 		)
 	end,
 	update = function(self, delta)
+		if not self:current_command_is_valid() then
+			return
+		end
 		if self.mode == CusorMode.Select then
 		elseif self.mode == CusorMode.MoveCommand then
 			self.next_command.position = level:mouse_position()
-			self.next_command.path = level.pathfinding:get_path(self.next_command.source.position, level:mouse_position())
+			self.next_command:set_path(level.pathfinding:get_path(self.next_command.source.position,
+				level:mouse_position()))
 		elseif self.mode == CusorMode.DistractCommand then
 			self.next_command.position = level:mouse_position()
+			self.next_command:set_path(level.pathfinding:get_path(self.next_command.source.position,
+				level:mouse_position()))
 		elseif self.mode == CusorMode.DistractTarget then
 			self.next_command.target = level:mouse_position()
 		elseif self.mode == CusorMode.WaitCommand then
 			self.next_command.position = level:mouse_position()
+			self.next_command:set_path(level.pathfinding:get_path(self.next_command.source.position,
+				level:mouse_position()))
 		elseif self.mode == CusorMode.WaitTimer then
 			local wait_time = (self.next_command.position - level:mouse_position()):length() / 20
 			if wait_time >= 0.1 then
@@ -404,6 +412,8 @@ local Cursor = {
 			end
 		elseif self.mode == CusorMode.EditCommandPosition then
 			self.selected_command.position = level:mouse_position()
+			self.selected_command:set_path(level.pathfinding:get_path(self.selected_command.source.position,
+				level:mouse_position()))
 		elseif self.mode == CusorMode.EditCommandValue then
 			if self.selected_command:is(Commands.ThrowFirecracker) then
 				self.selected_command.target = level:mouse_position()
@@ -416,9 +426,15 @@ local Cursor = {
 			end
 		elseif self.mode == CusorMode.ListenCommand then
 			self.next_command.position = level:mouse_position()
+			self.next_command:set_path(level.pathfinding:get_path(self.next_command.source.position,
+				level:mouse_position()))
 		elseif self.mode == CusorMode.ShoutCommand then
+			self.next_command:set_path(level.pathfinding:get_path(self.next_command.source.position,
+				level:mouse_position()))
 			self.next_command.position = level:mouse_position()
 		elseif self.mode == CusorMode.InteractCommand then
+			self.next_command:set_path(level.pathfinding:get_path(self.next_command.source.position,
+				level:mouse_position()))
 			self.next_command.position = level:mouse_position()
 		end
 	end,
