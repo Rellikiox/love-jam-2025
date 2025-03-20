@@ -389,6 +389,7 @@ local Cursor = {
 		if self.mode == CusorMode.Select then
 		elseif self.mode == CusorMode.MoveCommand then
 			self.next_command.position = level:mouse_position()
+			self.next_command.path = level.pathfinding:get_path(self.next_command.source.position, level:mouse_position())
 		elseif self.mode == CusorMode.DistractCommand then
 			self.next_command.position = level:mouse_position()
 		elseif self.mode == CusorMode.DistractTarget then

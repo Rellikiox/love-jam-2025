@@ -12,7 +12,13 @@ local Command = Object:extend()
 
 function Command:draw_path()
 	love.graphics.setLineWidth(3)
-	love.graphics.line(self.source.position.x, self.source.position.y, self.position.x, self.position.y)
+	if self.path then
+		for index = 1, #self.path - 1 do
+			love.graphics.line(self.path[index].x, self.path[index].y, self.path[index + 1].x, self.path[index + 1].y)
+		end
+	else
+		love.graphics.line(self.source.position.x, self.source.position.y, self.position.x, self.position.y)
+	end
 	love.graphics.setLineWidth(1)
 end
 
@@ -21,6 +27,7 @@ local MoveCommand = Command:extend()
 function MoveCommand:init(args)
 	Command.init(self, args)
 	self.source = args.source
+	self.path = args.path
 	self.position = args.position
 end
 

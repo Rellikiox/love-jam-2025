@@ -41,11 +41,9 @@ function Physics:is_line_unobstructed(from, to)
 		return false
 	end
 	local collides = false
-	local collisions = 0
 	self.world:rayCast(from.x, from.y, to.x, to.y, function(fixture)
-		collisions = collisions + 1
 		local object = fixture:getUserData()
-		if not object then
+		if not fixture:isSensor() and not object then
 			collides = true
 		end
 		return -1
