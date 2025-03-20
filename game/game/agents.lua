@@ -28,6 +28,7 @@ function Agent:init(args)
 	self.shape = love.physics.newCircleShape(self.radius)
 	self.fixture = love.physics.newFixture(self.body, self.shape, 1)
 	self.fixture:setUserData(self)
+	self.fixture:setGroupIndex(-1)
 	self.body:setLinearDamping(10)
 end
 
