@@ -12,7 +12,7 @@ function Agent:init(args)
 	self.quad = args.quad
 	self.radius = args.radius
 	self.is_goblin = args.is_goblin
-	self.speed = 30
+	self.speed = 6000
 	self.components = {}
 	for _, component in ipairs(args.components) do
 		component.parent = self
@@ -28,10 +28,12 @@ function Agent:init(args)
 	self.shape = love.physics.newCircleShape(self.radius)
 	self.fixture = love.physics.newFixture(self.body, self.shape, 1)
 	self.fixture:setUserData(self)
-	self.fixture:setSensor(true)
+	self.body:setLinearDamping(10)
 end
 
 function Agent:update(delta)
+	self.position = vec2 { self.body:getPosition() }
+
 	for _, component in ipairs(self.components) do
 		component:update(delta)
 	end

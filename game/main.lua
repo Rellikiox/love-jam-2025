@@ -31,10 +31,10 @@ function PressurePlate:update(delta)
 	end
 
 	if was_pressed and not self.pressed then
-		self.device.is_open = false
+		self.device:close()
 	end
 	if not was_pressed and self.pressed then
-		self.device.is_open = true
+		self.device:open()
 	end
 end
 
@@ -53,6 +53,16 @@ function Door:init(args)
 	self.alive = true
 	self.is_open = false
 	self.is_horizontal = args.is_horizontal
+
+
+	self.body = love.physics.newBody(Physics.world, self.position.x, self.position.y, 'static')
+	if self.is_horizontal then
+		self.shape = love.physics.newRectangleShape(32, 12)
+	else
+		self.shape = love.physics.newRectangleShape(12, 32)
+	end
+	self.fixture = love.physics.newFixture(self.body, self.shape, 1)
+	self.fixture:setUserData(self)
 end
 
 function Door:update(delta)
@@ -72,6 +82,16 @@ function Door:draw()
 			Assets.images.door_vertical_open:draw(self.position)
 		end
 	end
+end
+
+function Door:open()
+	self.is_open = true
+	self.fixture:setSensor(true)
+end
+
+function Door:close()
+	self.is_open = false
+	self.fixture:setSensor(false)
 end
 
 local FirecrackerDust = Object:extend()

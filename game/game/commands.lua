@@ -30,8 +30,8 @@ end
 
 function MoveCommand:update(delta)
 	local direction = (self.position - self.agent.position):normalized()
-	self.agent.position = self.agent.position + direction * self.agent.speed * delta
-	self.agent.body:setPosition(self.agent.position.x, self.agent.position.y)
+	local force = direction * self.agent.speed * delta
+	self.agent.body:applyForce(force.x, force.y)
 	if (self.position - self.agent.position):length() < 1 then
 		return CommandState.Finished
 	end
@@ -68,8 +68,9 @@ end
 function PatrolCommand:update(delta)
 	local position = self.points[self.target_point]
 	local direction = (position - self.agent.position):normalized()
-	self.agent.position = self.agent.position + direction * self.agent.speed * delta
-	self.agent.body:setPosition(self.agent.position.x, self.agent.position.y)
+	local force = direction * self.agent.speed * delta
+	self.agent.body:applyForce(force.x, force.y)
+
 	if (position - self.agent.position):length() < 1 then
 		local prev = self.target_point
 		self.target_point = math.fmod(self.target_point, #self.points) + 1
