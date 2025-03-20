@@ -11,6 +11,40 @@ local Pathfinding = require 'game.pathfinding'
 game_size = vec2 { 800, 600 }
 level = nil
 
+local Treasure = Object:extend()
+
+function Treasure:init(args)
+	self.alive = true
+	self.position = args.position
+end
+
+function Treasure:update(delta)
+end
+
+function Treasure:draw()
+	Assets.images.treasure:draw(self.position)
+end
+
+local ExitZone = Object:extend()
+
+function ExitZone:init(args)
+	self.alive = true
+	self.position = args.position
+end
+
+function ExitZone:update(delta)
+	local entities = Physics:get_entities_at(self.position, 5)
+	for _, entity in ipairs(entities) do
+		if entity.is_goblin then
+			print('Extracted!')
+		end
+	end
+end
+
+function ExitZone:draw()
+	Assets.images.exit:draw(self.position)
+end
+
 local PressurePlate = Object:extend()
 
 function PressurePlate:init(args)
@@ -161,6 +195,7 @@ level = {
 	layers = {},
 	agents = {},
 	entities = {},
+	spawn_points = {},
 	pathfinding = nil,
 	simulation_running = false,
 	mouse_position = function(self)
@@ -483,6 +518,8 @@ local cursor_mode_text = {
 entity_references = {}
 
 function ldtk.onEntity(ldtk_entity)
+	print('entity')
+
 	local entity = nil
 	if ldtk_entity.id == 'Pressure_plate' then
 		entity = PressurePlate {
@@ -516,21 +553,19 @@ function ldtk.onEntity(ldtk_entity)
 	end
 
 	-- Is an agent
-
-
-	local quad
-	local commands = {}
-	local components = {}
-	local speed = 6000
-	if ldtk_entity.id == 'Sneaky' then
-		quad = Assets.images.sneaky
-	elseif ldtk_entity.id == 'Brute' then
-		quad = Assets.images.brute
-	elseif ldtk_entity.id == 'Trickster' then
-		quad = Assets.images.trickster
+	if ldtk_entity.id == 'Treasure' then
+		table.insert(level.entities, Treasure {
+			position = vec2 { ldtk_entity.x, ldtk_entity.y }
+		})
+	elseif ldtk_entity.id == 'Exit' then
+		table.insert(level.entities, ExitZone {
+			position = vec2 { ldtk_entity.x, ldtk_entity.y }
+		})
+	elseif ldtk_entity.id == 'Spawn' then
+		table.insert(level.spawn_points, vec2 { ldtk_entity.x, ldtk_entity.y })
 	elseif ldtk_entity.id == 'Enemy' then
-		quad = Assets.images.enemy
 		local points = {}
+		local commands = {}
 		for _, point in ipairs(ldtk_entity.props.Patrol) do
 			table.insert(points, vec2 { point.cx + 0.5, point.cy + 0.5 } * 32)
 		end
@@ -538,26 +573,26 @@ function ldtk.onEntity(ldtk_entity)
 			table.insert(commands, Commands.Patrol { points = points })
 		end
 
-		table.insert(components, Agents.Hearing {})
-		table.insert(components, Agents.Vision { range = 100, angle = math.pi / 4 })
-		table.insert(components, Agents.Capture { range = 20 })
-		table.insert(components, Agents.BeingNosy {})
-		speed = 5000
+		table.insert(level.agents, Agents.Agent {
+			name = ldtk_entity.id,
+			position = vec2 { ldtk_entity.x, ldtk_entity.y },
+			quad = Assets.images.enemy,
+			radius = 20,
+			is_goblin = false,
+			commands = commands,
+			components = {
+				Agents.Hearing {},
+				Agents.Vision { range = 100, angle = math.pi / 4 },
+				Agents.Capture { range = 20 },
+				Agents.BeingNosy {},
+			},
+			speed = 5000
+		})
 	end
-
-	table.insert(level.agents, Agents.Agent {
-		name = ldtk_entity.id,
-		position = vec2 { ldtk_entity.x, ldtk_entity.y },
-		quad = quad,
-		radius = ldtk_entity.width / 2,
-		is_goblin = ldtk_entity.id ~= 'Enemy',
-		commands = commands,
-		components = components,
-		speed = speed
-	})
 end
 
 function ldtk.onLayer(layer)
+	print('layer')
 	if layer.id == 'Tiles' then
 		level.pathfinding:process_tiles(layer.tiles)
 	end
@@ -571,6 +606,8 @@ function ldtk.onLayer(layer)
 end
 
 function ldtk.onLevelLoaded(ldtk_level)
+	print('loaded')
+
 	entity_references = {}
 
 	level.name = string.gsub(ldtk_level.id, '_', ' ')
@@ -581,6 +618,7 @@ function ldtk.onLevelLoaded(ldtk_level)
 	level.layers = {}
 	level.agents = {}
 	level.entities = {}
+	level.spawn_points = {}
 	level.simulation_running = false
 	level.pathfinding = Pathfinding {}
 	Cursor:set_mode(CusorMode.Select)
@@ -588,6 +626,19 @@ function ldtk.onLevelLoaded(ldtk_level)
 end
 
 function ldtk.onLevelCreated(ldtk_level)
+	print('created')
+	for _, point in ipairs(level.spawn_points) do
+		table.insert(level.agents, Agents.Agent {
+			name = 'Goblin',
+			position = point,
+			quad = Assets.images.goblin,
+			radius = 10,
+			is_goblin = true,
+			commands = {},
+			components = {},
+			speed = 6000
+		})
+	end
 end
 
 function love.load()
