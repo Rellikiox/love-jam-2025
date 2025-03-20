@@ -6,6 +6,7 @@ local ldtk = require 'lib.ldtk'
 local Terebi = require 'lib.terebi'
 local Commands = require 'game.commands'
 local Events = require 'engine.events'
+local Pathfinding = require 'game.pathfinding'
 
 game_size = vec2 { 800, 600 }
 level = nil
@@ -53,7 +54,7 @@ function Door:init(args)
 	self.alive = true
 	self.is_open = false
 	self.is_horizontal = args.is_horizontal
-
+	level.pathfinding:add_door(self.position)
 
 	self.body = love.physics.newBody(Physics.world, self.position.x, self.position.y, 'static')
 	if self.is_horizontal then
@@ -86,11 +87,13 @@ end
 function Door:open()
 	self.is_open = true
 	self.fixture:setSensor(true)
+	level.pathfinding:toggle_node_at_position(self.position)
 end
 
 function Door:close()
 	self.is_open = false
 	self.fixture:setSensor(false)
+	level.pathfinding:toggle_node_at_position(self.position)
 end
 
 local FirecrackerDust = Object:extend()
@@ -158,13 +161,13 @@ level = {
 	layers = {},
 	agents = {},
 	entities = {},
-	selected_agent = nil,
+	pathfinding = nil,
 	simulation_running = false,
 	mouse_position = function(self)
 		return vec2 { screen:getMousePosition() } - self.offset
 	end,
-	start_simulation = function(self)
-		self.simulation_running = true
+	toggle_simulation = function(self)
+		self.simulation_running = not self.simulation_running
 	end,
 }
 
@@ -460,7 +463,7 @@ local cursor_mode_text = {
 	end,
 }
 
-backfill_device_references = {}
+entity_references = {}
 
 function ldtk.onEntity(ldtk_entity)
 	local entity = nil
@@ -468,7 +471,11 @@ function ldtk.onEntity(ldtk_entity)
 		entity = PressurePlate {
 			position = vec2 { ldtk_entity.x, ldtk_entity.y },
 		}
-		backfill_device_references[ldtk_entity.props.Device.entityIid] = entity
+		if entity_references[ldtk_entity.props.Device.entityIid] then
+			entity.device = entity_references[ldtk_entity.props.Device.entityIid]
+		else
+			entity_references[ldtk_entity.props.Device.entityIid] = entity
+		end
 	elseif ldtk_entity.id == 'Door_H' then
 		entity = Door {
 			position = vec2 { ldtk_entity.x, ldtk_entity.y },
@@ -482,10 +489,11 @@ function ldtk.onEntity(ldtk_entity)
 	end
 
 	if entity then
-		if backfill_device_references[ldtk_entity.iid] then
-			backfill_device_references[ldtk_entity.iid].device = entity
+		if entity_references[ldtk_entity.iid] then
+			entity_references[ldtk_entity.iid].device = entity
+		else
+			entity_references[ldtk_entity.iid] = entity
 		end
-
 		table.insert(level.entities, entity)
 		return
 	end
@@ -514,7 +522,7 @@ function ldtk.onEntity(ldtk_entity)
 		end
 
 		table.insert(components, Agents.Hearing {})
-		table.insert(components, Agents.Vision { range = 100, angle = math.pi })
+		table.insert(components, Agents.Vision { range = 100, angle = math.pi / 4 })
 		table.insert(components, Agents.Capture { range = 20 })
 		table.insert(components, Agents.BeingNosy {})
 		speed = 5000
@@ -533,6 +541,10 @@ function ldtk.onEntity(ldtk_entity)
 end
 
 function ldtk.onLayer(layer)
+	if layer.id == 'Tiles' then
+		level.pathfinding:process_tiles(layer.tiles)
+	end
+
 	for _, tile in ipairs(layer.tiles) do
 		if tile.t == 32 then
 			Physics:make_wall(vec2 { tile.px[1], tile.px[2] })
@@ -542,7 +554,7 @@ function ldtk.onLayer(layer)
 end
 
 function ldtk.onLevelLoaded(ldtk_level)
-	backfill_device_references = {}
+	entity_references = {}
 
 	level.name = string.gsub(ldtk_level.id, '_', ' ')
 	level.offset = vec2 {
@@ -551,7 +563,9 @@ function ldtk.onLevelLoaded(ldtk_level)
 	}
 	level.layers = {}
 	level.agents = {}
+	level.entities = {}
 	level.simulation_running = false
+	level.pathfinding = Pathfinding {}
 	Cursor:set_mode(CusorMode.Select)
 	Physics:load()
 end
@@ -657,6 +671,8 @@ function love.draw()
 
 			Colors.FullWhite:set()
 
+			level.pathfinding:draw()
+
 			love.graphics.pop()
 		end)
 end
@@ -667,7 +683,7 @@ function love.keyreleased(key)
 	elseif key == '[' then
 		ldtk:previous()
 	elseif key == 'space' then
-		level:start_simulation()
+		level:toggle_simulation()
 	elseif key == 'm' then
 		Cursor:set_mode(CusorMode.MoveCommand)
 	elseif key == 'd' then
@@ -680,6 +696,8 @@ function love.keyreleased(key)
 		Cursor:set_mode(CusorMode.ShoutCommand)
 	elseif key == 'e' then
 		Cursor:set_mode(CusorMode.InteractCommand)
+	elseif key == 'r' then
+		ldtk:reload()
 	elseif key == 'delete' or key == 'backspace' then
 		Cursor:delete_current_command()
 	end

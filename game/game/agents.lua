@@ -140,7 +140,9 @@ function BeingNosyComponent:update(delta)
 		end
 	else
 		self.investigation_command = nil
-		table.remove(self.parent.commands, 1)
+		if #self.parent.commands > 1 then
+			table.remove(self.parent.commands, 1)
+		end
 	end
 end
 
