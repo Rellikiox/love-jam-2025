@@ -138,6 +138,9 @@ function BeingNosyComponent:update(delta)
 			self.investigation_command = Commands.Investigate { path = { target } }
 			self.parent:add_command(self.investigation_command, 1)
 		end
+	else
+		self.investigation_command = nil
+		table.remove(self.parent.commands, 1)
 	end
 end
 
