@@ -62,7 +62,6 @@ function Door:init(args)
 		self.shape = love.physics.newRectangleShape(12, 32)
 	end
 	self.fixture = love.physics.newFixture(self.body, self.shape, 1)
-	self.fixture:setUserData(self)
 end
 
 function Door:update(delta)
@@ -489,7 +488,8 @@ function ldtk.onEntity(ldtk_entity)
 
 
 	local quad
-	local commands = nil
+	local commands = {}
+	local components = {}
 	if ldtk_entity.id == 'Sneaky' then
 		quad = Assets.images.sneaky
 	elseif ldtk_entity.id == 'Brute' then
@@ -502,12 +502,16 @@ function ldtk.onEntity(ldtk_entity)
 		for _, point in ipairs(ldtk_entity.props.Patrol) do
 			table.insert(points, vec2 { point.cx + 0.5, point.cy + 0.5 } * 32)
 		end
-		commands = {
-			Commands.Patrol { points = points }
-		}
+		if #points > 0 then
+			table.insert(commands, Commands.Patrol { points = points })
+		end
+
+		table.insert(components, Agents.Hearing {})
+		table.insert(components, Agents.Vision { range = 100, angle = math.pi / 4 })
+		table.insert(components, Agents.Capture { range = 20 })
+		table.insert(components, Agents.BeingNosy {})
 	end
 
-	local components = {}
 	if ldtk_entity.props.Components then
 		for _, component_name in ipairs(ldtk_entity.props.Components) do
 			table.insert(components, Agents[component_name] {})

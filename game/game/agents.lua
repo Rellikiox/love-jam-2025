@@ -1,6 +1,7 @@
 local Assets = require 'game.assets'
 local Physics = require 'game.physics'
 local Commands = require 'game.commands'
+local Events = require 'engine.events'
 
 local Agent = Object:extend()
 
@@ -8,6 +9,7 @@ function Agent:init(args)
 	self.alive = true
 	self.name = args.name
 	self.position = args.position
+	self.direction = vec2.left
 	self.current_command = 1
 	self.quad = args.quad
 	self.radius = args.radius
@@ -34,6 +36,10 @@ end
 
 function Agent:update(delta)
 	self.position = vec2 { self.body:getPosition() }
+	self.direction = vec2 { self.body:getLinearVelocity() }:normalized()
+	if self.direction == vec2.zero then
+		self.direction = vec2.left
+	end
 
 	for _, component in ipairs(self.components) do
 		component:update(delta)
@@ -116,16 +122,93 @@ end
 function Component:draw()
 end
 
+local BeingNosyComponent = Component:extend()
+
+function BeingNosyComponent:init(args)
+end
+
+function BeingNosyComponent:update(delta)
+	-- self.parent:add_command(Commands.Investigate { path = { self.parent.position, noise.position } }, 1)
+end
+
 local HearingComponent = Component:extend()
 
 function HearingComponent:init(args)
-	self.radius = args.radius
 	self.parent = nil
+	self.noises = {}
 end
 
 function HearingComponent:process_noise(noise)
-	print('I\'ve heard something at ', noise.position)
-	self.parent:add_command(Commands.Investigate { path = { self.parent.position, noise.position } }, 1)
+	table.insert(self.noises, noise)
 end
 
-return { Agent = Agent, Hearing = HearingComponent }
+local VisionComponent = Component:extend()
+
+function VisionComponent:init(args)
+	self.range = args.range
+	self.angle = args.angle
+	self.entities_in_vision = {}
+	self.parent = nil
+end
+
+function VisionComponent:update(delta)
+	self.entities_in_vision = {}
+	local entities = Physics:get_entities_at(self.parent.position, self.range)
+	for _, entity in ipairs(entities) do
+		if entity.is_goblin then
+			local to_entity = entity.position - self.parent.position
+			local angle_to_entity = to_entity:angle_between(self.parent.direction)
+			local angle = self.parent.direction:angle()
+			if math.abs(angle - angle_to_entity) <= self.angle / 2 then
+				if Physics:is_line_unobstructed(self.parent.position, entity.position) then
+					table.insert(self.entities_in_vision, entity)
+					print('see you')
+				end
+			end
+		end
+	end
+end
+
+function VisionComponent:draw()
+	Colors.Red:with_alpha(0.3):set()
+
+	local angle = self.parent.direction:angle()
+	love.graphics.arc("fill", self.parent.position.x, self.parent.position.y, self.range,
+		angle - self.angle / 2,
+		angle + self.angle / 2)
+
+	Colors.FullWhite:set()
+end
+
+local CaptureComponent = Component:extend()
+
+function CaptureComponent:init(args)
+	self.range = args.range
+	self.parent = nil
+end
+
+function CaptureComponent:update(delta)
+	local entities = Physics:get_entities_at(self.parent.position, self.range)
+	for _, entity in ipairs(entities) do
+		if entity.is_goblin then
+			Events:send('goblin-captured', entity)
+		end
+	end
+end
+
+function CaptureComponent:draw()
+	Colors.Red:with_alpha(0.6):set()
+	love.graphics.circle("line", self.parent.position.x, self.parent.position.y, self.range)
+	Colors.Red:with_alpha(0.3):set()
+	love.graphics.circle("fill", self.parent.position.x, self.parent.position.y, self.range)
+	Colors.FullWhite:set()
+end
+
+return {
+	Agent = Agent,
+	Hearing = HearingComponent,
+	Vision = VisionComponent,
+	Capture = CaptureComponent,
+	BeingNosy =
+		BeingNosyComponent
+}

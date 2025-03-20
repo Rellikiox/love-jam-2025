@@ -36,22 +36,22 @@ function Physics:get_entities_at(position, radius)
 	return entities
 end
 
-function Physics:is_line_unobstructed(from, to, radius)
+function Physics:is_line_unobstructed(from, to)
 	if from == to then
 		return false
 	end
 	local collides = false
+	local collisions = 0
 	self.world:rayCast(from.x, from.y, to.x, to.y, function(fixture)
+		collisions = collisions + 1
 		local object = fixture:getUserData()
 		if not object then
 			collides = true
 		end
-		return 0
+		return -1
 	end)
-	if collides then
-		return false
-	end
-	return true
+	print(collisions, collides)
+	return not collides
 end
 
 function Physics:make_wall(position)

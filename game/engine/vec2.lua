@@ -73,6 +73,10 @@ function vec2:angle()
 	return math.atan2(self.y, self.x)
 end
 
+function vec2:angle_between(other)
+	return math.atan2(self.x * other.y - self.y * other.x, self.x * other.x + self.y * other.y)
+end
+
 function vec2:normalized()
 	local length = math.sqrt(self.x * self.x + self.y * self.y)
 	if length > 0 then
@@ -95,3 +99,4 @@ end
 
 vec2.zero = vec2 { 0, 0 }
 vec2.one = vec2 { 1, 1 }
+vec2.left = vec2 { 1, 0 }
