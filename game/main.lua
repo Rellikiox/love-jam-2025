@@ -601,8 +601,6 @@ function love.update(delta)
 
 	Physics.world:update(delta)
 
-
-
 	for i = #level.entities, 1, -1 do
 		local entity = level.entities[i]
 		entity:update(delta)
