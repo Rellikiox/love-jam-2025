@@ -32,6 +32,12 @@ function Assets:load()
 	self.images.listen_command = Drawable(love.graphics.newQuad(160, 96, 32, 32, self.images.tiles))
 	self.images.shout_command = Drawable(love.graphics.newQuad(192, 96, 32, 32, self.images.tiles))
 	self.images.interact_command = Drawable(love.graphics.newQuad(224, 96, 32, 32, self.images.tiles))
+	self.images.pressure_plate = Drawable(love.graphics.newQuad(128, 128, 32, 32, self.images.tiles))
+	self.images.pressure_plate_pressed = Drawable(love.graphics.newQuad(160, 128, 32, 32, self.images.tiles))
+	self.images.door_horizontal = Drawable(love.graphics.newQuad(192, 128, 32, 32, self.images.tiles))
+	self.images.door_horizontal_open = Drawable(love.graphics.newQuad(192, 160, 32, 32, self.images.tiles))
+	self.images.door_vertical = Drawable(love.graphics.newQuad(224, 128, 32, 32, self.images.tiles))
+	self.images.door_vertical_open = Drawable(love.graphics.newQuad(224, 160, 32, 32, self.images.tiles))
 end
 
 return Assets

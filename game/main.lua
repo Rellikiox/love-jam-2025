@@ -10,6 +10,70 @@ local Events = require 'engine.events'
 game_size = vec2 { 800, 600 }
 local level
 
+local PressurePlate = Object:extend()
+
+function PressurePlate:init(args)
+	self.position = args.position
+	self.alive = true
+	self.device = args.device
+	self.pressed = false
+end
+
+function PressurePlate:update(delta)
+	local entities = Physics:get_entities_at(self.position, 5)
+	local was_pressed = self.pressed
+	self.pressed = false
+	for _, entity in ipairs(entities) do
+		if entity.is_goblin then
+			self.pressed = true
+			break
+		end
+	end
+
+	if was_pressed and not self.pressed then
+		self.device.is_open = false
+	end
+	if not was_pressed and self.pressed then
+		self.device.is_open = true
+	end
+end
+
+function PressurePlate:draw()
+	if self.pressed then
+		Assets.images.pressure_plate_pressed:draw(self.position)
+	else
+		Assets.images.pressure_plate:draw(self.position)
+	end
+end
+
+local Door = Object:extend()
+
+function Door:init(args)
+	self.position = args.position
+	self.alive = true
+	self.is_open = false
+	self.is_horizontal = args.is_horizontal
+end
+
+function Door:update(delta)
+end
+
+function Door:draw()
+	if not self.is_open then
+		if self.is_horizontal then
+			Assets.images.door_horizontal:draw(self.position)
+		else
+			Assets.images.door_vertical:draw(self.position)
+		end
+	else
+		if self.is_horizontal then
+			Assets.images.door_horizontal_open:draw(self.position)
+		else
+			Assets.images.door_vertical_open:draw(self.position)
+		end
+	end
+end
+
 local FirecrackerDust = Object:extend()
 
 function FirecrackerDust:init(args)
@@ -371,7 +435,39 @@ local cursor_mode_text = {
 	end,
 }
 
+backfill_device_references = {}
+
 function ldtk.onEntity(ldtk_entity)
+	local entity = nil
+	if ldtk_entity.id == 'Pressure_plate' then
+		entity = PressurePlate {
+			position = vec2 { ldtk_entity.x, ldtk_entity.y },
+		}
+		backfill_device_references[ldtk_entity.props.Device.entityIid] = entity
+	elseif ldtk_entity.id == 'Door_H' then
+		entity = Door {
+			position = vec2 { ldtk_entity.x, ldtk_entity.y },
+			is_horizontal = true
+		}
+	elseif ldtk_entity.id == 'Door_V' then
+		entity = Door {
+			position = vec2 { ldtk_entity.x, ldtk_entity.y },
+			is_horizontal = false
+		}
+	end
+
+	if entity then
+		if backfill_device_references[ldtk_entity.iid] then
+			backfill_device_references[ldtk_entity.iid].device = entity
+		end
+
+		table.insert(level.entities, entity)
+		return
+	end
+
+	-- Is an agent
+
+
 	local quad
 	local commands = nil
 	if ldtk_entity.id == 'Sneaky' then
@@ -419,6 +515,8 @@ function ldtk.onLayer(layer)
 end
 
 function ldtk.onLevelLoaded(ldtk_level)
+	backfill_device_references = {}
+
 	level.name = string.gsub(ldtk_level.id, '_', ' ')
 	level.offset = vec2 {
 		(game_size.x - ldtk_level.width) / 2,
