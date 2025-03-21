@@ -6,13 +6,19 @@ local Treasure = Object:extend()
 function Treasure:init(args)
 	self.alive = true
 	self.position = args.position
+	if math.random() > 0.5 then
+		self.image = Assets.images.treasure_a
+	else
+		self.image = Assets.images.treasure_b
+	end
+	self.rotation = math.random(4) * math.pi / 2
 end
 
 function Treasure:update(delta)
 end
 
 function Treasure:draw()
-	Assets.images.treasure:draw(self.position)
+	self.image:draw(self.position, self.rotation)
 end
 
 local ExitZone = Object:extend()

@@ -38,7 +38,8 @@ function Assets:load()
 	self.images.door_horizontal_open = Drawable(love.graphics.newQuad(192, 160, 32, 32, self.images.tiles))
 	self.images.door_vertical = Drawable(love.graphics.newQuad(224, 128, 32, 32, self.images.tiles))
 	self.images.door_vertical_open = Drawable(love.graphics.newQuad(224, 160, 32, 32, self.images.tiles))
-	self.images.treasure = Drawable(love.graphics.newQuad(128, 160, 32, 32, self.images.tiles))
+	self.images.treasure_a = Drawable(love.graphics.newQuad(128, 160, 32, 32, self.images.tiles))
+	self.images.treasure_b = Drawable(love.graphics.newQuad(160, 160, 32, 32, self.images.tiles))
 	self.images.exit = Drawable(love.graphics.newQuad(96, 128, 32, 32, self.images.tiles))
 end
 

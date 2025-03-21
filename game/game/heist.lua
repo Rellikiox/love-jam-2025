@@ -101,7 +101,7 @@ function Heist:load_entity(ldtk_entity)
 				Agents.Capture { range = 20 },
 				Agents.BeingNosy {},
 			},
-			speed = 5000
+			speed = 6500
 		})
 	end
 end
@@ -151,7 +151,7 @@ function Heist:create_level(ldtk_level)
 			is_goblin = true,
 			commands = {},
 			components = {},
-			speed = 6000
+			speed = 8000
 		})
 	end
 end
@@ -237,8 +237,6 @@ function Heist:draw()
 	-- end
 
 	Colors.FullWhite:set()
-
-	self.pathfinding:draw()
 
 	love.graphics.pop()
 end
