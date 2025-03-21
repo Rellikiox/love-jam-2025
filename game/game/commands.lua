@@ -25,7 +25,7 @@ local MoveCommand = Command:extend()
 function MoveCommand:init(args)
 	Command.init(self, args)
 	self.source = args.source
-	self:set_path({})
+	self:set_path(args.path or {})
 	self.path_index = 1
 	self.position = args.position
 end
@@ -252,20 +252,8 @@ local InvestigateCommand = MoveCommand:extend()
 
 function InvestigateCommand:init(args)
 	MoveCommand.init(self, args)
-
-	self.draw_points = {}
-	for _, point in ipairs(self.path) do
-		table.insert(self.draw_points, point.x)
-		table.insert(self.draw_points, point.y)
-	end
 	self.wait_timer = Timer { autostart = false, timeout = 3 }
-end
-
-function InvestigateCommand:draw_path()
-	love.graphics.setLineWidth(1)
-	self.draw_points[1] = self.agent.position.x
-	self.draw_points[2] = self.agent.position.y
-	love.graphics.line(self.agent.position.x, self.agent.position.y, self.path[1].x, self.path[1].y)
+	self.arrived = false
 end
 
 function InvestigateCommand:draw_marker()
@@ -273,20 +261,9 @@ function InvestigateCommand:draw_marker()
 end
 
 function InvestigateCommand:update(delta)
-	if self.path_index <= #self.path then
-		local target = self.path[self.path_index]
-		while (target - self.agent.position):length() < 1 do
-			self.path_index = self.path_index + 1
-			if self.path_index > #self.path then
-				self.wait_timer:start()
-				return
-			end
-			target = self.path[self.path_index]
-		end
-
-		local direction = (target - self.agent.position):normalized()
-		local force = direction * self.agent.speed * delta
-		self.agent.body:applyForce(force.x, force.y)
+	if not self.arrived then
+		local move_state = MoveCommand.update(self, delta)
+		self.arrived = move_state == CommandState.Finished
 	else
 		self.wait_timer:increment(delta)
 		if self.wait_timer.finished then
