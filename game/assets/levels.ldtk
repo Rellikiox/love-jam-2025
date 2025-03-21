@@ -11,7 +11,7 @@
 	"iid": "dae07c10-e920-11ef-bdd1-7987eeba8e49",
 	"jsonVersion": "1.5.3",
 	"appBuildId": 473703,
-	"nextUid": 37,
+	"nextUid": 38,
 	"identifierStyle": "Capitalize",
 	"toc": [],
 	"worldLayout": "Free",
@@ -493,10 +493,48 @@
 			"savedSelections": [],
 			"cachedPixelData": {
 				"opaqueTiles": "1111000011110000111100001111000010000000000000000000000000000000",
-				"averageColors": "ffdbffdbffdbffdb5676567656765c66ffdbfedbffdbffdb1aa9488729884666fedbfedbfedbffdb45550a7752223777fedbffdbfedbfedb4c66465545554877f43400004bdd8ae94dba3dcb6a986a98000000000000000087530000198819880000000000000000000000000000000000000000000000000000000000000000"
+				"averageColors": "ffdbffdbffdbffdb56875a9900005c66ffdbfedbffdbffdb1aa9488729884666fedbfedbfedbffdb45550a7752223777fedbffdbfedbfedb4c66465545554877f43400004bdd8ae94dba3dcb6a986a980000000000004f886a986a98198819880000000000000000000000000000000000000000000000000000000000000000"
 			}
 		}
-	], "enums": [], "externalEnums": [], "levelFields": [] },
+	], "enums": [], "externalEnums": [], "levelFields": [
+		{
+			"identifier": "name",
+			"doc": null,
+			"__type": "String",
+			"uid": 37,
+			"type": "F_String",
+			"isArray": false,
+			"canBeNull": true,
+			"arrayMinLength": null,
+			"arrayMaxLength": null,
+			"editorDisplayMode": "Hidden",
+			"editorDisplayScale": 1,
+			"editorDisplayPos": "Above",
+			"editorLinkStyle": "StraightArrow",
+			"editorDisplayColor": null,
+			"editorAlwaysShow": false,
+			"editorShowInWorld": true,
+			"editorCutLongValues": true,
+			"editorTextSuffix": null,
+			"editorTextPrefix": null,
+			"useForSmartColor": false,
+			"exportToToc": false,
+			"searchable": false,
+			"min": null,
+			"max": null,
+			"regex": null,
+			"acceptFileTypes": null,
+			"defaultOverride": null,
+			"textLanguageMode": null,
+			"symmetricalRef": false,
+			"autoChainRef": true,
+			"allowOutOfLevelRef": true,
+			"allowedRefs": "OnlySame",
+			"allowedRefsEntityUid": null,
+			"allowedRefTags": [],
+			"tilesetUid": null
+		}
+	] },
 	"levels": [
 		{
 			"identifier": "The_dungeon",
@@ -517,7 +555,10 @@
 			"__smartColor": "#ADADB5",
 			"__bgPos": null,
 			"externalRelPath": null,
-			"fieldInstances": [],
+			"fieldInstances": [{ "__identifier": "name", "__type": "String", "__value": "The Dungeon", "__tile": null, "defUid": 37, "realEditorValues": [{
+				"id": "V_String",
+				"params": ["The Dungeon"]
+			}] }],
 			"layerInstances": [
 				{
 					"__identifier": "Entities",
@@ -1121,7 +1162,10 @@
 			"__smartColor": "#ADADB5",
 			"__bgPos": null,
 			"externalRelPath": null,
-			"fieldInstances": [],
+			"fieldInstances": [{ "__identifier": "name", "__type": "String", "__value": "The Catacombs", "__tile": null, "defUid": 37, "realEditorValues": [{
+				"id": "V_String",
+				"params": ["The Catacombs"]
+			}] }],
 			"layerInstances": [
 				{
 					"__identifier": "Entities",
@@ -1370,7 +1414,10 @@
 			"__smartColor": "#ADADB5",
 			"__bgPos": null,
 			"externalRelPath": null,
-			"fieldInstances": [],
+			"fieldInstances": [{ "__identifier": "name", "__type": "String", "__value": "Test", "__tile": null, "defUid": 37, "realEditorValues": [{
+				"id": "V_String",
+				"params": ["Test"]
+			}] }],
 			"layerInstances": [
 				{
 					"__identifier": "Entities",

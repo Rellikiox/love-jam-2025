@@ -19,7 +19,7 @@ function Heist:init(args)
 	self.agents = {}
 	self.entities = {}
 	self.spawn_points = {}
-	self.pathfinding = nil
+	self.pathfinding = Pathfinding {}
 	self.simulation_running = false
 	self.entity_references = {}
 end
@@ -30,6 +30,18 @@ end
 
 function Heist:toggle_simulation()
 	self.simulation_running = not self.simulation_running
+end
+
+function Heist:load_entities(entities)
+	for _, entity in ipairs(entities) do
+		self:load_entity(entity)
+	end
+end
+
+function Heist:load_layers(layers)
+	for _, layer in ipairs(layers) do
+		self:load_layer(layer)
+	end
 end
 
 function Heist:load_entity(ldtk_entity)
@@ -63,21 +75,21 @@ function Heist:load_entity(ldtk_entity)
 		else
 			self.entity_references[ldtk_entity.iid] = entity
 		end
-		table.insert(level.entities, entity)
+		table.insert(self.entities, entity)
 		return
 	end
 
 	-- Is an agent
 	if ldtk_entity.id == 'Treasure' then
-		table.insert(level.entities, Entities.Treasure {
+		table.insert(self.entities, Entities.Treasure {
 			position = vec2 { ldtk_entity.x, ldtk_entity.y }
 		})
 	elseif ldtk_entity.id == 'Exit' then
-		table.insert(level.entities, Entities.ExitZone {
+		table.insert(self.entities, Entities.ExitZone {
 			position = vec2 { ldtk_entity.x, ldtk_entity.y }
 		})
 	elseif ldtk_entity.id == 'Spawn' then
-		table.insert(level.spawn_points, vec2 { ldtk_entity.x, ldtk_entity.y })
+		table.insert(self.spawn_points, vec2 { ldtk_entity.x, ldtk_entity.y })
 	elseif ldtk_entity.id == 'Enemy' then
 		local points = {}
 		local commands = {}
@@ -94,7 +106,7 @@ function Heist:load_entity(ldtk_entity)
 			position = vec2 { ldtk_entity.x, ldtk_entity.y }
 		end
 
-		table.insert(level.agents, Agents.Agent {
+		table.insert(self.agents, Agents.Agent {
 			name = ldtk_entity.id,
 			position = position,
 			quad = Assets.images.enemy,
@@ -126,7 +138,7 @@ end
 function Heist:load_layer(layer)
 	print('layer')
 	if layer.id == 'Tiles' then
-		level.pathfinding:process_tiles(layer.tiles)
+		self.pathfinding:process_tiles(layer.tiles)
 	end
 
 	for _, tile in ipairs(layer.tiles) do
@@ -134,7 +146,7 @@ function Heist:load_layer(layer)
 			Physics:make_wall(vec2 { tile.px[1], tile.px[2] })
 		end
 	end
-	table.insert(level.layers, layer)
+	table.insert(self.layers, layer)
 end
 
 function Heist:load_level(ldtk_level)
@@ -142,7 +154,7 @@ function Heist:load_level(ldtk_level)
 
 	self.entity_references = {}
 
-	self.name = string.gsub(ldtk_level.id, '_', ' ')
+	self.name = ldtk_level.props.name
 	self.offset = vec2 {
 		(game_size.x - ldtk_level.width) / 2,
 		(game_size.y - ldtk_level.height) / 2,
@@ -159,8 +171,8 @@ end
 
 function Heist:create_level(ldtk_level)
 	print('created')
-	for _, point in ipairs(level.spawn_points) do
-		table.insert(level.agents, Agents.Agent {
+	for _, point in ipairs(self.spawn_points) do
+		table.insert(self.agents, Agents.Agent {
 			name = 'Goblin',
 			position = point,
 			quad = Assets.images.goblin,
@@ -184,7 +196,7 @@ function love.load()
 	Physics:load()
 
 	Events:listen(nil, 'launch-firecracker', function(from, to)
-		table.insert(level.entities, Entities.Firecracker { position = from, target = to })
+		table.insert(self.entities, Entities.Firecracker { position = from, target = to })
 	end)
 
 
