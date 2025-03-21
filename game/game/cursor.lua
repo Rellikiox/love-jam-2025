@@ -212,14 +212,7 @@ local Cursor = {
 		elseif self.mode == CusorMode.InteractCommand then
 			from = self.selected_agent:next_command_source().position
 			to = level:mouse_position()
-			local treasure_in_range = false
-			for _, entity in ipairs(level.entities) do
-				if entity:is(Entities.Treasure) then
-					if entity.position:distance(to) <= 16 then
-						treasure_in_range = true
-					end
-				end
-			end
+			local treasure_in_range = level:treasure_at(to)
 			if not treasure_in_range then
 				return false
 			end
@@ -340,6 +333,7 @@ local Cursor = {
 				self.next_command:set_path(path_to_mouse)
 			end
 			self.next_command.position = level:mouse_position()
+			self.next_command.treasure = level:treasure_at(level:mouse_position())
 		end
 	end,
 	delete_current_command = function(self)

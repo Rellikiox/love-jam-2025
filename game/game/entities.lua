@@ -12,6 +12,7 @@ function Treasure:init(args)
 		self.image = Assets.images.treasure_b
 	end
 	self.rotation = math.random(4) * math.pi / 2
+	self.looted = false
 end
 
 function Treasure:update(delta)
@@ -19,6 +20,9 @@ end
 
 function Treasure:draw()
 	self.image:draw(self.position, self.rotation)
+	if self.looted then
+		Assets.images.looted:draw(self.position)
+	end
 end
 
 local ExitZone = Object:extend()

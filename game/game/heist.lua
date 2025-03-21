@@ -106,6 +106,17 @@ function Heist:load_entity(ldtk_entity)
 	end
 end
 
+function Heist:treasure_at(position)
+	for _, entity in ipairs(self.entities) do
+		if entity:is(Entities.Treasure) and not entity.looted then
+			if entity.position:distance(position) <= 16 then
+				return entity
+			end
+		end
+	end
+	return nil
+end
+
 function Heist:load_layer(layer)
 	print('layer')
 	if layer.id == 'Tiles' then

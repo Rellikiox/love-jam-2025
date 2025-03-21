@@ -73,7 +73,7 @@ function Agent:draw_commands(is_selected)
 	if is_selected then
 		Colors.Black:set()
 	else
-		Colors.Black:with_alpha(0.5):set()
+		Colors.Black:with_alpha(0.3):set()
 	end
 	for _, command in ipairs(self.commands) do
 		command:draw_path()
@@ -82,7 +82,7 @@ function Agent:draw_commands(is_selected)
 	if is_selected then
 		Colors.FullWhite:set()
 	else
-		Colors.FullWhite:with_alpha(0.5):set()
+		Colors.FullWhite:with_alpha(0.3):set()
 	end
 	for _, command in ipairs(self.commands) do
 		command:draw_marker()

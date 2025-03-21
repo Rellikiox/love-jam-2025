@@ -787,6 +787,22 @@
 							"fieldInstances": [],
 							"__worldX": 560,
 							"__worldY": 368
+						},
+						{
+							"__identifier": "Treasure",
+							"__grid": [2,4],
+							"__pivot": [0.5,0.5],
+							"__tags": [],
+							"__tile": { "tilesetUid": 2, "x": 128, "y": 160, "w": 32, "h": 32 },
+							"__smartColor": "#3E2731",
+							"iid": "91ee3560-e920-11ef-bc85-cbe231326d8f",
+							"width": 16,
+							"height": 16,
+							"defUid": 36,
+							"px": [80,144],
+							"fieldInstances": [],
+							"__worldX": 48,
+							"__worldY": 112
 						}
 					]
 				},

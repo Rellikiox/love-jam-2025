@@ -12,7 +12,7 @@ local Command = Object:extend()
 
 function Command:draw_path()
 	love.graphics.setLineWidth(3)
-	if self.draw_points then
+	if #self.draw_points > 0 then
 		love.graphics.line(unpack(self.draw_points))
 	else
 		love.graphics.line(self.source.position.x, self.source.position.y, self.position.x, self.position.y)
@@ -278,10 +278,36 @@ local InteractCommand = MoveCommand:extend()
 function InteractCommand:init(args)
 	MoveCommand.init(self, args)
 	self.object = args.object
+	self.loot_timer = Timer {
+		timeout = 1, autostart = false
+	}
+	self.treasure = args.treasure
+	self.arrived = false
 end
 
 function InteractCommand:draw_marker()
 	Assets.images.interact_command:draw(self.position)
+end
+
+function InteractCommand:update(delta)
+	if self.treasure.looted then
+		return CommandState.Finished
+	end
+	if not self.arrived then
+		local move_state = MoveCommand.update(self, delta)
+		self.arrived = move_state == CommandState.Finished
+	else
+		if self.loot_timer.paused then
+			self.loot_timer:start()
+		end
+		self.loot_timer:increment(delta)
+		if self.loot_timer.finished then
+			self.treasure.looted = true
+			Events:send('loot', self.agent)
+			return CommandState.Finished
+		end
+	end
+	return CommandState.Running
 end
 
 return {
