@@ -35,6 +35,10 @@ function Agent:init(args)
 end
 
 function Agent:update(delta)
+	if self.captured then
+		return
+	end
+
 	self.position = vec2 { self.body:getPosition() }
 	local new_direction = vec2 { self.body:getLinearVelocity() }:normalized()
 	if new_direction ~= vec2.zero then
@@ -61,12 +65,8 @@ function Agent:draw()
 	for _, component in pairs(self.components) do
 		component:draw()
 	end
-	love.graphics.draw(
-		Assets.images.tiles,
-		self.quad,
-		self.position.x - 16,
-		self.position.y - 16
-	)
+
+	self.quad:draw(self.position)
 end
 
 function Agent:draw_commands(is_selected)
@@ -101,6 +101,12 @@ function Agent:next_command_source()
 		return { position = self.position }
 	end
 	return self.commands[#self.commands]
+end
+
+function Agent:capture()
+	self.captured = true
+	self.body:setLinearVelocity(0, 0)
+	self.quad = Assets.images.captured
 end
 
 local Component = Object:extend()
@@ -172,7 +178,7 @@ function VisionComponent:update(delta)
 	self.entities_in_vision = {}
 	local entities = Physics:get_entities_at(self.parent.position, self.range)
 	for _, entity in ipairs(entities) do
-		if entity.is_goblin then
+		if entity.is_goblin and not entity.captured then
 			local to_entity = entity.position - self.parent.position
 			local angle_to_entity = to_entity:angle_between(self.parent.direction)
 			if math.abs(angle_to_entity) <= self.angle / 2 then
@@ -206,6 +212,7 @@ function CaptureComponent:update(delta)
 	local entities = Physics:get_entities_at(self.parent.position, self.range)
 	for _, entity in ipairs(entities) do
 		if entity.is_goblin then
+			entity:capture()
 			Events:send('goblin-captured', entity)
 		end
 	end

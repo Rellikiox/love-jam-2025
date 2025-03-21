@@ -34,7 +34,7 @@ local Cursor = {
 		if self.mode == CusorMode.Select then
 			-- Look for an agent first
 			for _, agent in ipairs(level.agents) do
-				if agent.position:distance(level:mouse_position()) <= agent.radius then
+				if agent.is_goblin and not agent.captured and agent.position:distance(level:mouse_position()) <= agent.radius then
 					self.selected_agent = agent
 					self:set_mode(CusorMode.MoveCommand)
 					return
@@ -46,7 +46,7 @@ local Cursor = {
 			for _, agent in ipairs(level.agents) do
 				if agent.is_goblin then
 					for _, command in ipairs(agent.commands) do
-						if command.position:distance(level:mouse_position()) <= 10 then
+						if not command.agent.captured and command.position:distance(level:mouse_position()) <= 10 then
 							self.selected_command = command
 							self:set_mode(CusorMode.EditCommandPosition)
 							return
