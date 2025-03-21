@@ -42,6 +42,8 @@ function Assets:load()
 	self.images.treasure_b = Drawable(love.graphics.newQuad(160, 160, 32, 32, self.images.tiles))
 	self.images.looted = Drawable(love.graphics.newQuad(96, 160, 32, 32, self.images.tiles))
 	self.images.exit = Drawable(love.graphics.newQuad(96, 128, 32, 32, self.images.tiles))
+	self.images.win_con = love.graphics.newImage('assets/victory.png')
+	self.images.lose_con = love.graphics.newImage('assets/captured.png')
 end
 
 return Assets

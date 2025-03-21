@@ -12,6 +12,11 @@ game_size = vec2 { 800, 600 }
 
 level = {}
 
+
+levels = {}
+
+state = 'level_select'
+
 function ldtk.onEntity(ldtk_entity)
 	level:load_entity(ldtk_entity)
 end
@@ -43,53 +48,101 @@ function love.load()
 		table.insert(level.entities, Entities.Firecracker { position = from, target = to })
 	end)
 
+	Events:listen(nil, 'goblin-captured', function(goblin)
+		local remaining = 0
+		for _, agent in ipairs(level.agents) do
+			if agent.is_goblin and not agent.captured then
+				remaining = remaining + 1
+			end
+		end
+		if remaining == 0 then
+			state = 'lose_con'
+		end
+	end)
+
+	Events:listen(nil, 'goblin-extracted', function(goblin)
+		state = 'win_con'
+	end)
+
 	ldtk:load('assets/levels.ldtk')
-	ldtk:goTo(1)
 end
 
 function love.update(delta)
-	Cursor:update(delta)
+	if state == 'level_select' then
 
-	if not level then
-		return
+	elseif state == 'heist' then
+		Cursor:update(delta)
+		level:update(delta)
+	elseif state == 'win_con' then
+	elseif state == 'lose_con' then
 	end
-
-	level:update(delta)
 end
 
 function love.draw()
 	screen:draw(
 		function()
-			if not level then
-				return
+			if state == 'level_select' then
+
+			elseif state == 'heist' then
+				level:draw()
+				Cursor:draw()
+			elseif state == 'win_con' then
+				level:draw()
+				love.graphics.draw(Assets.images.win_con, 0, 0)
+				Colors.Black:set()
+				local text = 'Press any key to continue'
+				local offset = FontSmall:getWidth(text) / 2
+				love.graphics.setFont(FontSmall)
+				love.graphics.print(text, math.floor(game_size.x / 2 - offset), math.floor(game_size.y / 2 + 100))
+			elseif state == 'lose_con' then
+				level:draw()
+				love.graphics.draw(Assets.images.lose_con, 0, 0)
+				Colors.White:set()
+				local text = 'Press any key to continue'
+				local offset = FontSmall:getWidth(text) / 2
+				love.graphics.setFont(FontSmall)
+				love.graphics.print(text, math.floor(game_size.x / 2 - offset), math.floor(game_size.y / 2 + 100))
 			end
-
-			level:draw()
-
-			Cursor:draw()
 		end)
 end
 
 function love.keyreleased(key)
-	if key == ']' then
-		ldtk:next()
-	elseif key == '[' then
-		ldtk:previous()
-	elseif key == 'r' then
-		ldtk:reload()
-	else
-		Cursor:handle_keyreleased(key)
-		if level then
-			level:handle_keyreleased(key)
+	if state == 'level_select' then
+		if key == '1' then
+			ldtk:goTo(1)
+			state = 'heist'
 		end
+	elseif state == 'heist' then
+		if key == ']' then
+			ldtk:next()
+		elseif key == '[' then
+			ldtk:previous()
+		elseif key == 'r' then
+			ldtk:reload()
+		else
+			Cursor:handle_keyreleased(key)
+			if level then
+				level:handle_keyreleased(key)
+			end
+		end
+	elseif state == 'lose_con' then
+		state = 'level_select'
+	elseif state == 'win_con' then
+		state = 'level_select'
 	end
 end
 
 function love.mousemoved(x, y, dx, dy, istouch)
+	if state ~= 'heist' then
+		return
+	end
 	Cursor:handle_mousemoved(x, y, dx, dy, istouch)
 end
 
 function love.mousereleased(x, y, button)
+	if state ~= 'heist' then
+		return
+	end
 	Cursor:handle_mousereleased(x, y, button)
 end
 

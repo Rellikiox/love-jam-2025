@@ -87,10 +87,16 @@ function Heist:load_entity(ldtk_entity)
 		if #points > 0 then
 			table.insert(commands, Commands.Patrol { points = points })
 		end
+		local position
+		if #points > 0 then
+			position = points[1]
+		else
+			position = vec2 { ldtk_entity.x, ldtk_entity.y }
+		end
 
 		table.insert(level.agents, Agents.Agent {
 			name = ldtk_entity.id,
-			position = vec2 { ldtk_entity.x, ldtk_entity.y },
+			position = position,
 			quad = Assets.images.enemy,
 			radius = 20,
 			is_goblin = false,

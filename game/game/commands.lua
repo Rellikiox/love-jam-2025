@@ -67,6 +67,7 @@ local PatrolCommand = Command:extend()
 function PatrolCommand:init(args)
 	Command.init(self, args)
 	self.points = args.points
+	self.source = { position = self.points[0] }
 	self.target_point = 1
 	self.draw_points = {}
 	for _, point in ipairs(self.points) do

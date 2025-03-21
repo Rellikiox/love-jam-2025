@@ -9,6 +9,7 @@ function Agent:init(args)
 	self.alive = true
 	self.name = args.name
 	self.position = args.position
+	self.spawn_position = args.position
 	self.direction = vec2.left
 	self.current_command = 1
 	self.quad = args.quad
@@ -27,7 +28,7 @@ function Agent:init(args)
 
 	-- Add physics for picking and collission detection
 	self.body = love.physics.newBody(Physics.world, self.position.x, self.position.y, 'dynamic')
-	self.shape = love.physics.newCircleShape(self.radius)
+	self.shape = love.physics.newCircleShape(10)
 	self.fixture = love.physics.newFixture(self.body, self.shape, 1)
 	self.fixture:setUserData(self)
 	self.fixture:setGroupIndex(-1)
@@ -65,8 +66,11 @@ function Agent:draw()
 	for _, component in pairs(self.components) do
 		component:draw()
 	end
-
-	self.quad:draw(self.position)
+	if self.captured then
+		Assets.images.captured:draw(self.position)
+	else
+		self.quad:draw(self.position)
+	end
 end
 
 function Agent:draw_commands(is_selected)
@@ -106,7 +110,6 @@ end
 function Agent:capture()
 	self.captured = true
 	self.body:setLinearVelocity(0, 0)
-	self.quad = Assets.images.captured
 end
 
 local Component = Object:extend()
