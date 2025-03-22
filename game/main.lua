@@ -66,6 +66,42 @@ level_select = {
 		state = 'heist'
 	end
 }
+local pause_menu = {
+	buttons = {
+		{
+			position = vec2 { game_size.x / 2 - 25, 250 },
+			size = vec2 { 50, 20 },
+			text = 'Resume',
+			on_click = function()
+				state = 'heist'
+			end
+		},
+		{
+			position = vec2 { game_size.x / 2 - 40, 350 },
+			size = vec2 { 80, 20 },
+			text = 'Back to Menu',
+			on_click = function()
+				state = 'level_select'
+			end
+		},
+	}
+}
+function draw_buttons(buttons)
+	for _, button in ipairs(buttons) do
+		Colors.Black:set()
+		love.graphics.rectangle('fill', button.position.x, button.position.y, button.size.x, button.size.y)
+		Colors.White:set()
+		love.graphics.setFont(FontTiny)
+		local offset = vec2 {
+			FontTiny:getWidth(button.text),
+			FontTiny:getHeight() } / 2
+		love.graphics.print(
+			button.text,
+			math.floor(button.position.x + button.size.x / 2 - offset.x),
+			math.floor(button.position.y + button.size.y / 2 - offset.y)
+		)
+	end
+end
 
 state = 'level_select'
 
@@ -164,26 +200,19 @@ function love.draw()
 	screen:draw(
 		function()
 			if state == 'level_select' then
-				for _, button in ipairs(level_select.buttons) do
-					Colors.Black:set()
-					love.graphics.rectangle('fill', button.position.x, button.position.y, button.size.x, button.size.y)
-					Colors.White:set()
-					love.graphics.setFont(FontTiny)
-					local offset = vec2 {
-						FontTiny:getWidth(button.text),
-						FontTiny:getHeight() } / 2
-					love.graphics.print(
-						button.text,
-						math.floor(button.position.x + button.size.x / 2 - offset.x),
-						math.floor(button.position.y + button.size.y / 2 - offset.y)
-					)
-				end
+				draw_buttons(level_select.buttons)
 				Colors.FullWhite:set()
 				local draw_position = vec2 { 100, game_size.y / 2 - 100 }
 				draw_level_preview(all_levels[level_select.selected_level], draw_position)
 			elseif state == 'heist' then
 				level:draw()
 				Cursor:draw()
+			elseif state == 'pause' then
+				level:draw()
+
+				Colors.White:with_alpha(0.9):set()
+				love.graphics.rectangle("fill", 300, 100, 200, 400)
+				draw_buttons(pause_menu.buttons)
 			elseif state == 'win_con' then
 				level:draw()
 				love.graphics.draw(Assets.images.win_con, 0, 0)
@@ -214,8 +243,10 @@ function love.keyreleased(key)
 			level_select:next_level()
 		end
 	elseif state == 'heist' then
-		Cursor:handle_keyreleased(key)
-		if level then
+		if key == 'escape' then
+			state = 'pause'
+		else
+			Cursor:handle_keyreleased(key)
 			level:handle_keyreleased(key)
 		end
 	elseif state == 'lose_con' then
@@ -241,6 +272,13 @@ function love.mousereleased(x, y, button)
 		end
 	elseif state == 'heist' then
 		Cursor:handle_mousereleased(x, y, button)
+	elseif state == 'pause' then
+		local mouse = vec2 { screen:getMousePosition() }
+		for _, button in ipairs(pause_menu.buttons) do
+			if point_in_rect(mouse, button.position, button.size) then
+				button:on_click()
+			end
+		end
 	end
 end
 

@@ -316,7 +316,7 @@ function Heist:draw()
 	-- end
 
 	Colors.White:set()
-	love.graphics.print(seconds_to_time(self.simulation_timer), 25, -25)
+	love.graphics.print(seconds_to_time(self.simulation_timer), 0, -36)
 
 	Colors.FullWhite:set()
 
