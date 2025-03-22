@@ -348,6 +348,7 @@ function InteractCommand:update(delta)
 		self.loot_timer:increment(delta)
 		if self.loot_timer.finished then
 			self.treasure.looted = true
+			level.treasure_obtained = level.treasure_obtained + 1
 			Events:send('loot', self.agent)
 			return CommandState.Finished
 		end

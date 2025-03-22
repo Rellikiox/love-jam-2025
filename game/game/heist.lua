@@ -24,11 +24,19 @@ function Heist:init(args)
 	self.entity_references = {}
 	self.has_started = false
 	self.simulation_timer = 0
+	self.firecrackers_used = 0
+	self.remaining_goblins = 0
+	self.starting_goblins = 0
+	self.treasure_obtained = 0
+	self.total_treasure = 0
 end
 
 function Heist:reset_simulation()
 	self.simulation_running = false
 	self.simulation_timer = 0
+	self.firecrackers_used = 0
+	self.remaining_goblins = #self.spawn_points
+	self.treasure_obtained = 0
 
 	for index = #self.entities, 1, -1 do
 		local entity = self.entities[index]
@@ -132,17 +140,18 @@ function Heist:load_entity(ldtk_entity)
 		return
 	end
 
-	-- Is an agent
 	if ldtk_entity.id == 'Treasure' then
 		table.insert(self.entities, Entities.Treasure {
 			position = vec2 { ldtk_entity.x, ldtk_entity.y }
 		})
+		self.total_treasure = self.total_treasure + 1
 	elseif ldtk_entity.id == 'Exit' then
 		table.insert(self.entities, Entities.ExitZone {
 			position = vec2 { ldtk_entity.x, ldtk_entity.y }
 		})
 	elseif ldtk_entity.id == 'Spawn' then
 		table.insert(self.spawn_points, vec2 { ldtk_entity.x, ldtk_entity.y })
+		self.starting_goblins = self.starting_goblins + 1
 	elseif ldtk_entity.id == 'Enemy' then
 		local points = {}
 		local commands = {}
@@ -232,6 +241,7 @@ function Heist:create_level(ldtk_level)
 			speed = 8000
 		})
 	end
+	self.remaining_goblins = self.starting_goblins
 end
 
 function love.load()

@@ -103,6 +103,11 @@ function draw_buttons(buttons)
 	end
 end
 
+function centered_string(text, y_pos)
+	offset = love.graphics.getFont():getWidth(text) / 2
+	love.graphics.print(text, math.floor(game_size.x / 2 - offset), math.floor(y_pos))
+end
+
 state = 'level_select'
 
 function draw_level_preview(level_data, position)
@@ -157,6 +162,7 @@ function love.load()
 	Physics:load()
 
 	Events:listen(nil, 'launch-firecracker', function(from, to)
+		level.firecrackers_used = level.firecrackers_used + 1
 		table.insert(level.entities, Entities.Firecracker { position = from, target = to })
 	end)
 
@@ -167,10 +173,12 @@ function love.load()
 				remaining = remaining + 1
 			end
 		end
+		level.remaining_goblins = remaining
 		if remaining == 0 then
 			state = 'lose_con'
 		end
 	end)
+
 
 	Events:listen(nil, 'goblin-extracted', function(goblin)
 		state = 'win_con'
@@ -217,10 +225,20 @@ function love.draw()
 				level:draw()
 				love.graphics.draw(Assets.images.win_con, 0, 0)
 				Colors.Black:set()
-				local text = 'Press any key to continue'
-				local offset = FontSmall:getWidth(text) / 2
+
+				local y_pos = game_size.y / 2
+				love.graphics.setFont(FontMedium)
+				centered_string('Time spent: ' .. seconds_to_time(level.simulation_timer), y_pos)
+				y_pos = y_pos + FontMedium:getHeight()
+				centered_string('Treasure reclaimed: ' .. level.treasure_obtained .. '/' .. level.total_treasure, y_pos)
+				y_pos = y_pos + FontMedium:getHeight()
+				centered_string('Goblins remaining: ' .. level.remaining_goblins .. '/' .. level.starting_goblins, y_pos)
+				y_pos = y_pos + FontMedium:getHeight()
+				centered_string('Firecrackers used: ' .. level.firecrackers_used, y_pos)
+				y_pos = y_pos + FontMedium:getHeight()
+
 				love.graphics.setFont(FontSmall)
-				love.graphics.print(text, math.floor(game_size.x / 2 - offset), math.floor(game_size.y / 2 + 100))
+				centered_string('Press any key to continue', y_pos)
 			elseif state == 'lose_con' then
 				level:draw()
 				love.graphics.draw(Assets.images.lose_con, 0, 0)
