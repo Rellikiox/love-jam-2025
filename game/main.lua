@@ -112,10 +112,6 @@ state = 'level_select'
 
 function draw_level_preview(level_data, position)
 	position = position:floor()
-
-	love.graphics.setFont(FontSmall)
-	love.graphics.print(level_data.name, position.x, position.y - FontSmall:getHeight())
-
 	for _, layer in ipairs(level_data.layers) do
 		for _, tile in ipairs(layer.tiles) do
 			local point = position + (vec2 { tile.px[1], tile.px[2] } / 4):floor()
@@ -208,13 +204,25 @@ function love.draw()
 	screen:draw(
 		function()
 			if state == 'level_select' then
+				love.graphics.draw(Assets.images.main_menu, 0, 0)
 				draw_buttons(level_select.buttons)
 				Colors.FullWhite:set()
 				local draw_position = vec2 { 100, game_size.y / 2 - 100 }
-				draw_level_preview(all_levels[level_select.selected_level], draw_position)
+				local level_data = all_levels[level_select.selected_level]
+				draw_level_preview(level_data, draw_position)
+
+				love.graphics.setFont(FontLarge)
+				draw_shadow_text(level_data.name, vec2 { 400, 100 }, 3)
 			elseif state == 'heist' then
 				level:draw()
 				Cursor:draw()
+
+				love.graphics.setFont(FontTiny)
+				local instructions1 =
+				'[M1] Select goblin \t[M] Move\t[F] Firecracker\t[W] Wait\t\t[S] Shout\t[L] Listen\t[E] Loot'
+				local instructions2 = '[M1] Select command \t[M1] Place command\t[Del/Backspace] Delete command'
+				centered_string(instructions1, game_size.y - 50)
+				centered_string(instructions2, game_size.y - 25)
 			elseif state == 'pause' then
 				level:draw()
 

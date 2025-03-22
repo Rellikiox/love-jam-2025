@@ -44,6 +44,7 @@ function Assets:load()
 	self.images.exit = Drawable(love.graphics.newQuad(96, 128, 32, 32, self.images.tiles))
 	self.images.win_con = love.graphics.newImage('assets/victory.png')
 	self.images.lose_con = love.graphics.newImage('assets/captured.png')
+	self.images.main_menu = love.graphics.newImage('assets/main-menu.png')
 end
 
 return Assets

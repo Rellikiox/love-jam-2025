@@ -346,6 +346,7 @@ local Cursor = {
 						local previous = self.selected_command.source
 						local next = agent.commands[index + 1]
 						next.source = previous
+						next:set_path(level.pathfinding:get_path(previous.position, next.position))
 					end
 					table.remove(agent.commands, index)
 				end
@@ -387,11 +388,11 @@ local Cursor = {
 function Cursor:handle_keyreleased(key)
 	if key == 'm' then
 		Cursor:set_mode(CusorMode.MoveCommand)
-	elseif key == 'd' then
+	elseif key == 'f' then
 		Cursor:set_mode(CusorMode.DistractCommand)
 	elseif key == 'w' then
 		Cursor:set_mode(CusorMode.WaitCommand)
-	elseif key == 'h' then
+	elseif key == 'l' then
 		Cursor:set_mode(CusorMode.ListenCommand)
 	elseif key == 's' then
 		Cursor:set_mode(CusorMode.ShoutCommand)

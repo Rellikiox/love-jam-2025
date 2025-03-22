@@ -103,22 +103,19 @@ function Pathfinding:get_node_path(from_node, to_node)
 		if node.node == to_node then
 			return node.path
 		end
-		if seen[node.node] then
-			goto continue
-		end
-		seen[node.node] = true
+		if not seen[node.node] then
+			seen[node.node] = true
 
-		for _, offset in ipairs({ vec2 { -1, 0 }, vec2 { 0, -1 }, vec2 { 1, 0 }, vec2 { 0, 1 } }) do
-			local other_node_id = node.node.cell.x + offset.x .. '.' .. node.node.cell.y + offset.y
-			local other_node = self.nodes[other_node_id]
-			if other_node and other_node.passable then
-				local other_path = table.shallow_copy(node.path)
-				table.insert(other_path, other_node)
-				table.insert(frontier, { node = other_node, path = other_path })
+			for _, offset in ipairs({ vec2 { -1, 0 }, vec2 { 0, -1 }, vec2 { 1, 0 }, vec2 { 0, 1 } }) do
+				local other_node_id = node.node.cell.x + offset.x .. '.' .. node.node.cell.y + offset.y
+				local other_node = self.nodes[other_node_id]
+				if other_node and other_node.passable then
+					local other_path = table.shallow_copy(node.path)
+					table.insert(other_path, other_node)
+					table.insert(frontier, { node = other_node, path = other_path })
+				end
 			end
 		end
-
-		::continue::
 	end
 
 	return {}
