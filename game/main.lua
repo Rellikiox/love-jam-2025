@@ -238,15 +238,13 @@ function love.draw()
 				y_pos = y_pos + FontMedium:getHeight()
 
 				love.graphics.setFont(FontSmall)
-				centered_string('Press any key to continue', y_pos)
+				centered_string('[R] Try again        [ESC] Back to menu', y_pos)
 			elseif state == 'lose_con' then
 				level:draw()
 				love.graphics.draw(Assets.images.lose_con, 0, 0)
 				Colors.White:set()
-				local text = 'Press any key to continue'
-				local offset = FontSmall:getWidth(text) / 2
 				love.graphics.setFont(FontSmall)
-				love.graphics.print(text, math.floor(game_size.x / 2 - offset), math.floor(game_size.y / 2 + 100))
+				centered_string('[R] Try again        [ESC] Back to menu', game_size.y / 2 + 75)
 			end
 		end)
 end
@@ -268,9 +266,19 @@ function love.keyreleased(key)
 			level:handle_keyreleased(key)
 		end
 	elseif state == 'lose_con' then
-		state = 'level_select'
+		if key == 'escape' then
+			state = 'level_select'
+		elseif key == 'r' then
+			level:reset_simulation()
+			state = 'heist'
+		end
 	elseif state == 'win_con' then
-		state = 'level_select'
+		if key == 'escape' then
+			state = 'level_select'
+		elseif key == 'r' then
+			level:reset_simulation()
+			state = 'heist'
+		end
 	end
 end
 
