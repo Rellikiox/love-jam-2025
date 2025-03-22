@@ -15,7 +15,56 @@ all_levels = {}
 loading_level = {}
 
 level_select = {
-	selected_level = 1
+	selected_level = 1,
+	buttons = {
+		{
+			position = vec2 { 50, 250 },
+			size = vec2 { 20, 20 },
+			text = '<',
+			on_click = function()
+				level_select:prev_level()
+			end
+		},
+		{
+			position = vec2 { 285, 250 },
+			size = vec2 { 20, 20 },
+			text = '>',
+			on_click = function()
+				level_select:next_level()
+			end
+		},
+		{
+			position = vec2 { 165, 350 },
+			size = vec2 { 40, 30 },
+			text = 'Enter',
+			on_click = function()
+				level_select:start_level()
+			end
+		}
+	},
+	next_level = function()
+		if level_select.selected_level == #all_levels then
+			level_select.selected_level = 1
+		else
+			level_select.selected_level = level_select.selected_level + 1
+		end
+	end,
+	prev_level = function()
+		if level_select.selected_level == 1 then
+			level_select.selected_level = #all_levels
+		else
+			level_select.selected_level = level_select.selected_level - 1
+		end
+	end,
+	start_level = function()
+		local level_data = all_levels[level_select.selected_level]
+		level = Heist {}
+		level:load_level(level_data.level)
+		level:load_layers(level_data.layers)
+		level:load_entities(level_data.entities)
+		level:create_level()
+		state = 'heist'
+	end
 }
 
 state = 'level_select'
@@ -98,6 +147,9 @@ function love.load()
 end
 
 function love.update(delta)
+	if delta > 0.5 then
+		return
+	end
 	if state == 'level_select' then
 
 	elseif state == 'heist' then
@@ -112,6 +164,21 @@ function love.draw()
 	screen:draw(
 		function()
 			if state == 'level_select' then
+				for _, button in ipairs(level_select.buttons) do
+					Colors.Black:set()
+					love.graphics.rectangle('fill', button.position.x, button.position.y, button.size.x, button.size.y)
+					Colors.White:set()
+					love.graphics.setFont(FontTiny)
+					local offset = vec2 {
+						FontTiny:getWidth(button.text),
+						FontTiny:getHeight() } / 2
+					love.graphics.print(
+						button.text,
+						math.floor(button.position.x + button.size.x / 2 - offset.x),
+						math.floor(button.position.y + button.size.y / 2 - offset.y)
+					)
+				end
+				Colors.FullWhite:set()
 				local draw_position = vec2 { 100, game_size.y / 2 - 100 }
 				draw_level_preview(all_levels[level_select.selected_level], draw_position)
 			elseif state == 'heist' then
@@ -140,38 +207,16 @@ end
 function love.keyreleased(key)
 	if state == 'level_select' then
 		if key == 'return' then
-			local level_data = all_levels[level_select.selected_level]
-			level = Heist {}
-			level:load_level(level_data.level)
-			level:load_layers(level_data.layers)
-			level:load_entities(level_data.entities)
-			level:create_level()
-			state = 'heist'
+			level_select:start_level()
 		elseif key == 'left' then
-			if level_select.selected_level == 1 then
-				level_select.selected_level = #all_levels
-			else
-				level_select.selected_level = level_select.selected_level - 1
-			end
+			level_select:prev_level()
 		elseif key == 'right' then
-			if level_select.selected_level == #all_levels then
-				level_select.selected_level = 1
-			else
-				level_select.selected_level = level_select.selected_level + 1
-			end
+			level_select:next_level()
 		end
 	elseif state == 'heist' then
-		if key == ']' then
-			ldtk:next()
-		elseif key == '[' then
-			ldtk:previous()
-		elseif key == 'r' then
-			ldtk:reload()
-		else
-			Cursor:handle_keyreleased(key)
-			if level then
-				level:handle_keyreleased(key)
-			end
+		Cursor:handle_keyreleased(key)
+		if level then
+			level:handle_keyreleased(key)
 		end
 	elseif state == 'lose_con' then
 		state = 'level_select'
@@ -181,17 +226,22 @@ function love.keyreleased(key)
 end
 
 function love.mousemoved(x, y, dx, dy, istouch)
-	if state ~= 'heist' then
-		return
+	if state == 'heist' then
+		Cursor:handle_mousemoved(x, y, dx, dy, istouch)
 	end
-	Cursor:handle_mousemoved(x, y, dx, dy, istouch)
 end
 
 function love.mousereleased(x, y, button)
-	if state ~= 'heist' then
-		return
+	if state == 'level_select' then
+		local mouse = vec2 { screen:getMousePosition() }
+		for _, button in ipairs(level_select.buttons) do
+			if point_in_rect(mouse, button.position, button.size) then
+				button:on_click()
+			end
+		end
+	elseif state == 'heist' then
+		Cursor:handle_mousereleased(x, y, button)
 	end
-	Cursor:handle_mousereleased(x, y, button)
 end
 
 function love.resize(w, h)

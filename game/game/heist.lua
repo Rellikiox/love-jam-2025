@@ -22,6 +22,55 @@ function Heist:init(args)
 	self.pathfinding = Pathfinding {}
 	self.simulation_running = false
 	self.entity_references = {}
+	self.has_started = false
+	self.simulation_timer = 0
+end
+
+function Heist:reset_simulation()
+	self.simulation_running = false
+	self.simulation_timer = 0
+
+	for index = #self.entities, 1, -1 do
+		local entity = self.entities[index]
+		if entity:is(Entities.FirecrackerDust) then
+			table.remove(self.entities, index)
+		elseif entity:is(Entities.Firecracker) then
+			table.remove(self.entities, index)
+		elseif entity:is(Entities.Treasure) then
+			entity.looted = false
+		elseif entity:is(Entities.Door) then
+			entity:close()
+		elseif entity:is(Entities.PressurePlate) then
+			entity.pressed = false
+		end
+	end
+
+	for _, agent in ipairs(self.agents) do
+		if agent.is_goblin then
+			for _, command in ipairs(agent.commands) do
+				command:reset()
+			end
+		else
+			for index = #agent.commands, 1, -1 do
+				local command = agent.commands[index]
+				if command:is(Commands.Patrol) then
+					command:reset()
+				else
+					table.remove(agent.commands, index)
+				end
+			end
+		end
+		for component_name, component in pairs(agent.components) do
+			component:reset()
+		end
+		agent.captured = false
+		agent.current_command = 1
+		agent.direction = vec2.left
+		agent.position = agent.spawn_position
+		agent.body:setPosition(agent.position.x, agent.position.y)
+		agent.body:setLinearVelocity(0, 0)
+		agent.body:setAngularVelocity(0, 0)
+	end
 end
 
 function Heist:mouse_position()
@@ -29,7 +78,13 @@ function Heist:mouse_position()
 end
 
 function Heist:toggle_simulation()
-	self.simulation_running = not self.simulation_running
+	if not self.has_started then
+		self.simulation_running = true
+		self.simulation_timer = 0
+		self.has_started = true
+	else
+		self.simulation_running = not self.simulation_running
+	end
 end
 
 function Heist:load_entities(entities)
@@ -45,8 +100,6 @@ function Heist:load_layers(layers)
 end
 
 function Heist:load_entity(ldtk_entity)
-	print('entity')
-
 	local entity = nil
 	if ldtk_entity.id == 'Pressure_plate' then
 		entity = Entities.PressurePlate {
@@ -136,7 +189,6 @@ function Heist:treasure_at(position)
 end
 
 function Heist:load_layer(layer)
-	print('layer')
 	if layer.id == 'Tiles' then
 		self.pathfinding:process_tiles(layer.tiles)
 	end
@@ -150,8 +202,6 @@ function Heist:load_layer(layer)
 end
 
 function Heist:load_level(ldtk_level)
-	print('loaded')
-
 	self.entity_references = {}
 
 	self.name = ldtk_level.props.name
@@ -170,7 +220,6 @@ function Heist:load_level(ldtk_level)
 end
 
 function Heist:create_level(ldtk_level)
-	print('created')
 	for _, point in ipairs(self.spawn_points) do
 		table.insert(self.agents, Agents.Agent {
 			name = 'Goblin',
@@ -208,6 +257,7 @@ function Heist:update(delta)
 	if not self.simulation_running then
 		return
 	end
+	self.simulation_timer = self.simulation_timer + delta
 
 	Physics.world:update(delta)
 
@@ -265,6 +315,9 @@ function Heist:draw()
 	-- 	love.graphics.circle("line", x, y, 20)
 	-- end
 
+	Colors.White:set()
+	love.graphics.print(seconds_to_time(self.simulation_timer), 25, -25)
+
 	Colors.FullWhite:set()
 
 	love.graphics.pop()
@@ -273,6 +326,8 @@ end
 function Heist:handle_keyreleased(key)
 	if key == 'space' then
 		level:toggle_simulation()
+	elseif key == 'r' then
+		level:reset_simulation()
 	end
 end
 

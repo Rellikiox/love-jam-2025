@@ -166,7 +166,7 @@ function Firecracker:init(args)
 		autostart = false,
 		callback = function()
 			local position = vec2 { self.body:getPosition() }
-			table.insert(level.agents, FirecrackerDust { position = position })
+			table.insert(level.entities, FirecrackerDust { position = position })
 			local neaby = Physics:get_entities_at(position, 100)
 			for _, agent in ipairs(neaby) do
 				if agent.components.hearing then
@@ -190,4 +190,12 @@ function Firecracker:update(delta)
 	end
 end
 
-return { Firecracker = Firecracker, Door = Door, PressurePlate = PressurePlate, ExitZone = ExitZone, Treasure = Treasure }
+return {
+	Firecracker = Firecracker,
+	Door = Door,
+	PressurePlate = PressurePlate,
+	ExitZone = ExitZone,
+	Treasure = Treasure,
+	FirecrackerDust =
+		FirecrackerDust
+}

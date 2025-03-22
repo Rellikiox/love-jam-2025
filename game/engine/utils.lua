@@ -69,6 +69,16 @@ function Timer(args)
 		stop = function(self)
 			self.paused = true
 			self.finished = false
+		end,
+		reset = function(self)
+			self.elapsed = 0
+			self.total_elapsed = 0
+			self.timeout = args.timeout
+			self.autostart = autostart
+			self.paused = not autostart
+			self.callback = args.callback
+			self.finished = false
+			self.finished_count = 0
 		end
 	}
 end
@@ -223,4 +233,23 @@ function draw_shadow_text(text, position, offset)
 	love.graphics.print(text, position.x + offset, position.y + offset)
 	Colors.White:set()
 	love.graphics.print(text, position.x, position.y)
+end
+
+function seconds_to_time(time)
+	if time > 0.5 then
+		print('a')
+	end
+	local minutes = math.floor(time / 60)
+	local remainder = math.fmod(time, 60)
+	local seconds = math.floor(remainder)
+	local miliseconds = math.floor((remainder - seconds) * 1000)
+	local minutes_text = tostring(minutes)
+	if minutes < 10 then
+		minutes_text = '0' .. minutes
+	end
+	local seconds_text = tostring(seconds)
+	if seconds < 10 then
+		seconds_text = '0' .. seconds
+	end
+	return minutes_text .. ':' .. seconds_text .. '.' .. miliseconds
 end

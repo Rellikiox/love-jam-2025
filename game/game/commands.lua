@@ -30,6 +30,10 @@ function MoveCommand:init(args)
 	self.position = args.position
 end
 
+function MoveCommand:reset()
+	self.path_index = 1
+end
+
 function MoveCommand:set_path(path)
 	self.path = path
 	self.draw_points = {}
@@ -78,6 +82,10 @@ function PatrolCommand:init(args)
 	table.insert(self.draw_points, self.points[1].y)
 end
 
+function PatrolCommand:reset()
+	self.target_point = 1
+end
+
 function PatrolCommand:draw_path()
 	love.graphics.setLineWidth(2)
 	love.graphics.line(unpack(self.draw_points))
@@ -97,7 +105,6 @@ function PatrolCommand:update(delta)
 	self.agent.body:applyForce(force.x, force.y)
 
 	if (position - self.agent.position):length() < 1 then
-		local prev = self.target_point
 		self.target_point = math.fmod(self.target_point, #self.points) + 1
 	end
 	return CommandState.Running
@@ -118,6 +125,13 @@ function ThrowFirecrackerComand:init(args)
 			Events:send('launch-firecracker', self.position, self.target)
 		end
 	}
+end
+
+function ThrowFirecrackerComand:reset()
+	MoveCommand.reset(self)
+	self.arrived = false
+	self.finished = false
+	self.wait_timer:reset()
 end
 
 function ThrowFirecrackerComand:draw_path()
@@ -166,6 +180,13 @@ function WaitComand:init(args)
 	self:set_wait_time(0.1)
 end
 
+function WaitComand:reset()
+	MoveCommand.reset(self)
+	self.arrived = false
+	self.finished = false
+	self.wait_timer:reset()
+end
+
 function WaitComand:set_wait_time(time)
 	self.wait_time = string.format("%.1f", time)
 	self.wait_timer.timeout = tonumber(self.wait_time)
@@ -210,6 +231,12 @@ function ListenComand:init(args)
 	end)
 end
 
+function ListenComand:reset()
+	MoveCommand.reset(self)
+	self.arrived = false
+	self.heard = false
+end
+
 function ListenComand:draw_marker()
 	Assets.images.listen_command:draw(self.position)
 end
@@ -234,6 +261,11 @@ function ShoutComand:init(args)
 	self.arrived = false
 end
 
+function ShoutComand:reset()
+	MoveCommand.reset(self)
+	self.arrived = false
+end
+
 function ShoutComand:draw_marker()
 	Assets.images.shout_command:draw(self.position)
 end
@@ -255,6 +287,12 @@ function InvestigateCommand:init(args)
 	MoveCommand.init(self, args)
 	self.wait_timer = Timer { autostart = false, timeout = 3 }
 	self.arrived = false
+end
+
+function InvestigateCommand:reset()
+	MoveCommand.reset(self)
+	self.arrived = false
+	self.wait_timer:reset()
 end
 
 function InvestigateCommand:draw_marker()
@@ -284,6 +322,12 @@ function InteractCommand:init(args)
 	}
 	self.treasure = args.treasure
 	self.arrived = false
+end
+
+function InteractCommand:reset()
+	MoveCommand.reset(self)
+	self.arrived = false
+	self.loot_timer:reset()
 end
 
 function InteractCommand:draw_marker()

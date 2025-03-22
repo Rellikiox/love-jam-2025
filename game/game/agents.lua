@@ -128,6 +128,11 @@ local BeingNosyComponent = Component:extend()
 
 function BeingNosyComponent:init(args)
 	self.name = 'nosy'
+	self.investigation_command = nil
+end
+
+function BeingNosyComponent:reset()
+	self.investigation_command = nil
 end
 
 function BeingNosyComponent:update(delta)
@@ -135,7 +140,8 @@ function BeingNosyComponent:update(delta)
 	if #self.parent.components.vision.entities_in_vision > 0 then
 		target = self.parent.components.vision.entities_in_vision[1].position
 	elseif #self.parent.components.hearing.noises > 0 then
-		target = self.parent.components.hearing.noises[1].position
+		local noise = table.remove(self.parent.components.hearing.noises, 1)
+		target = noise.position
 	end
 
 	if target then
@@ -163,6 +169,10 @@ function HearingComponent:init(args)
 	self.noises = {}
 end
 
+function HearingComponent:reset()
+	self.noises = {}
+end
+
 function HearingComponent:process_noise(noise)
 	table.insert(self.noises, noise)
 end
@@ -175,6 +185,10 @@ function VisionComponent:init(args)
 	self.angle = args.angle
 	self.entities_in_vision = {}
 	self.parent = nil
+end
+
+function VisionComponent:reset()
+	self.entities_in_vision = {}
 end
 
 function VisionComponent:update(delta)
@@ -209,6 +223,9 @@ function CaptureComponent:init(args)
 	self.name = 'capture'
 	self.range = args.range
 	self.parent = nil
+end
+
+function CaptureComponent:reset()
 end
 
 function CaptureComponent:update(delta)
