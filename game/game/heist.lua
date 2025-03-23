@@ -22,6 +22,8 @@ function Heist:init(args)
 	self.pathfinding = Pathfinding {}
 	self.simulation_running = false
 	self.entity_references = {}
+	self.doors = {}
+	self.plates = {}
 	self.has_started = false
 	self.simulation_timer = 0
 	self.firecrackers_used = 0
@@ -113,34 +115,23 @@ function Heist:load_entity(ldtk_entity)
 		entity = Entities.PressurePlate {
 			position = vec2 { ldtk_entity.x, ldtk_entity.y },
 		}
-		if self.entity_references[ldtk_entity.props.Device.entityIid] then
-			entity.device = self.entity_references[ldtk_entity.props.Device.entityIid]
-		else
-			self.entity_references[ldtk_entity.props.Device.entityIid] = entity
-		end
+		self.plates[entity] = ldtk_entity.props.Device.entityIid
+		table.insert(self.entities, entity)
 	elseif ldtk_entity.id == 'Door_H' then
 		entity = Entities.Door {
 			position = vec2 { ldtk_entity.x, ldtk_entity.y },
 			is_horizontal = true
 		}
+		self.doors[ldtk_entity.iid] = entity
+		table.insert(self.entities, entity)
 	elseif ldtk_entity.id == 'Door_V' then
 		entity = Entities.Door {
 			position = vec2 { ldtk_entity.x, ldtk_entity.y },
 			is_horizontal = false
 		}
-	end
-
-	if entity then
-		if self.entity_references[ldtk_entity.iid] then
-			self.entity_references[ldtk_entity.iid].device = entity
-		else
-			self.entity_references[ldtk_entity.iid] = entity
-		end
+		self.doors[ldtk_entity.iid] = entity
 		table.insert(self.entities, entity)
-		return
-	end
-
-	if ldtk_entity.id == 'Treasure' then
+	elseif ldtk_entity.id == 'Treasure' then
 		table.insert(self.entities, Entities.Treasure {
 			position = vec2 { ldtk_entity.x, ldtk_entity.y }
 		})
@@ -229,6 +220,10 @@ function Heist:load_level(ldtk_level)
 end
 
 function Heist:create_level(ldtk_level)
+	for plate, door in pairs(self.plates) do
+		plate:set_device(self.doors[door])
+	end
+
 	for _, point in ipairs(self.spawn_points) do
 		table.insert(self.agents, Agents.Agent {
 			name = 'Goblin',

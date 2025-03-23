@@ -242,11 +242,14 @@ function love.draw()
 				Cursor:draw()
 
 				love.graphics.setFont(FontTiny)
-				local instructions1 =
-				'[M1] Select goblin \t[M] Move\t[F] Firecracker\t[W] Wait\t\t[S] Shout\t[L] Listen\t[E] Loot'
-				local instructions2 = '[M1] Select command \t[M1] Place command\t[Del/Backspace] Delete command'
-				centered_string(instructions1, game_size.y - 50)
-				centered_string(instructions2, game_size.y - 25)
+				local instructions = {
+					'[M1] Select goblin \t[M] Move\t[F] Firecracker\t[W] Wait\t\t[S] Shout\t[L] Listen\t[E] Loot',
+					'[M1] Select command \t[M1] Place command\t[Del/Backspace] Delete command',
+					'[ESC] Menu\t[R] Restart level'
+				}
+				centered_string(instructions[1], game_size.y - 50)
+				centered_string(instructions[2], game_size.y - 35)
+				centered_string(instructions[3], game_size.y - 20)
 			elseif state == 'pause' then
 				level:draw()
 

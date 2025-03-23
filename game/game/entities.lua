@@ -52,26 +52,26 @@ local PressurePlate = Object:extend()
 function PressurePlate:init(args)
 	self.position = args.position
 	self.alive = true
-	self.device = args.device
+
+	self:set_device(args.device)
 	self.pressed = false
+end
+
+function PressurePlate:set_device(device)
+	self.device = device
+	if device then
+		table.insert(self.device.plates, self)
+	end
 end
 
 function PressurePlate:update(delta)
 	local entities = Physics:get_entities_at(self.position, 5)
-	local was_pressed = self.pressed
 	self.pressed = false
 	for _, entity in ipairs(entities) do
 		if entity:is(Agents.Agent) then
 			self.pressed = true
 			break
 		end
-	end
-
-	if was_pressed and not self.pressed then
-		self.device:close()
-	end
-	if not was_pressed and self.pressed then
-		self.device:open()
 	end
 end
 
@@ -99,9 +99,23 @@ function Door:init(args)
 		self.shape = love.physics.newRectangleShape(12, 32)
 	end
 	self.fixture = love.physics.newFixture(self.body, self.shape, 1)
+	self.plates = {}
 end
 
 function Door:update(delta)
+	local plate_pressed = false
+	for _, plate in ipairs(self.plates) do
+		if plate.pressed then
+			plate_pressed = true
+			break
+		end
+	end
+	if plate_pressed and not self.is_open then
+		self:open()
+	end
+	if not plate_pressed and self.is_open then
+		self:close()
+	end
 end
 
 function Door:draw()
