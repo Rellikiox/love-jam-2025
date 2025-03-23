@@ -1,4 +1,4 @@
-name = "Game"
+name = "Whats the plan boss"
 default_targets = ["win32", "win64", "macos"]
 build_directory = "../builds"
 love_files = [

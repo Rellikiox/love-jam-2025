@@ -236,9 +236,6 @@ function draw_shadow_text(text, position, offset)
 end
 
 function seconds_to_time(time)
-	if time > 0.5 then
-		print('a')
-	end
 	local minutes = math.floor(time / 60)
 	local remainder = math.fmod(time, 60)
 	local seconds = math.floor(remainder)

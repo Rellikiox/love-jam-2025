@@ -19,23 +19,23 @@ level_select = {
 	selected_level = 1,
 	buttons = {
 		{
-			position = vec2 { 250, 250 },
-			size = vec2 { 20, 20 },
+			position = vec2 { 300, 350 },
+			size = vec2 { 20, 30 },
 			text = '<',
 			on_click = function()
 				level_select:prev_level()
 			end
 		},
 		{
-			position = vec2 { 485, 250 },
-			size = vec2 { 20, 20 },
+			position = vec2 { 485, 350 },
+			size = vec2 { 20, 30 },
 			text = '>',
 			on_click = function()
 				level_select:next_level()
 			end
 		},
 		{
-			position = vec2 { 365, 350 },
+			position = vec2 { 377, 350 },
 			size = vec2 { 40, 30 },
 			text = 'Enter',
 			on_click = function()
@@ -65,7 +65,7 @@ level_select = {
 		level:load_level(level_data.level)
 		level:load_layers(level_data.layers)
 		level:load_entities(level_data.entities)
-		level:create_level()
+		level:create_level(level_data.level)
 		state = 'heist'
 	end
 }
@@ -114,6 +114,52 @@ end
 function centered_shadow_string(text, y_pos, shadow)
 	local offset = love.graphics.getFont():getWidth(text) / 2
 	draw_shadow_text(text, math.floor(game_size.x / 2 - offset), math.floor(y_pos), shadow)
+end
+
+local level_stats = {}
+
+function load_level_stats()
+	local file = love.filesystem.newFile('level-scores.txt')
+	local stats = {}
+	if file:open('r') then
+		for line in file:lines() do
+			local level_id, time, treasure, t_treasure, goblins, t_goblins, firecrackers = line:match(
+				"([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+)")
+			if level_id and time and treasure and t_treasure and goblins and t_goblins and firecrackers then
+				stats[level_id] = {
+					time = tonumber(time / 1000),
+					treasure = tonumber(treasure),
+					total_treasure = tonumber(t_treasure),
+					goblins = tonumber(goblins),
+					total_goblins = tonumber(t_goblins),
+					firecrackers =
+						tonumber(firecrackers)
+				}
+			end
+		end
+		file:close()
+	end
+	return stats
+end
+
+function save_level_stats(stats)
+	local file = love.filesystem.newFile('level-scores.txt')
+	if file:open('w') then
+		for level_id, data in pairs(stats) do
+			local line = string.format(
+				"%s,%d,%d,%d,%d,%d,%d\n",
+				level_id,
+				data.time or 0,
+				data.treasure or 0,
+				data.total_treasure or 0,
+				data.goblins or 0,
+				data.total_goblins or 0,
+				data.firecrackers or 0
+			)
+			file:write(line)
+		end
+		file:close()
+	end
 end
 
 state = 'level_select'
@@ -206,12 +252,25 @@ function love.load()
 
 	Events:listen(nil, 'goblin-extracted', function(goblin)
 		state = 'win_con'
+		if not level_stats[level.id] or level.simulation_timer * 1000 < level_stats[level.id].time then
+			level_stats[level.id] = {
+				time = level.simulation_timer * 1000,
+				treasure = level.treasure_obtained,
+				total_treasure = level.total_treasure,
+				goblins = level.remaining_goblins,
+				total_goblins = level.starting_goblins,
+				firecrackers = level.firecrackers_used
+			}
+			save_level_stats(level_stats)
+		end
 	end)
 
 	ldtk:load('assets/levels.ldtk')
 	for level_name, _ in pairs(ldtk.levels) do
 		ldtk:level(level_name)
 	end
+
+	level_stats = load_level_stats()
 end
 
 function love.update(delta)
@@ -241,17 +300,40 @@ function love.draw()
 
 				Colors.Black:set()
 				love.graphics.setFont(FontMedium)
-				love.graphics.print(level_data.name, 300, game_size.y / 2 - 150)
+				centered_string(level_data.name, game_size.y / 2 - 150)
 
 				love.graphics.setFont(FontLarge)
 
-				draw_shadow_text("What's the plan boss?", vec2 { 200, 20 }, 3)
 				draw_shadow_text("What's the plan boss?", vec2 { 200, 20 }, 3)
 
 				love.graphics.setFont(FontSmall)
 				local text = "~ Barely created by Martin Candela ~"
 				local offset = FontSmall:getWidth(text) / 2
 				draw_shadow_text(text, vec2 { game_size.x / 2 - offset, game_size.y - 30 }, 2)
+
+				Colors.White:set()
+				love.graphics.setFont(FontSmall)
+				local current_level_stats = level_stats[level_data.id]
+				local y_pos = 25
+				if current_level_stats then
+					draw_shadow_text(seconds_to_time(current_level_stats.time), vec2 { 25, y_pos }, 2)
+					y_pos = y_pos + FontSmall:getHeight()
+					draw_shadow_text(
+						current_level_stats.treasure ..
+						'/' .. current_level_stats.total_treasure .. ' Treasures',
+						vec2 { 25, y_pos },
+						2)
+					y_pos = y_pos + FontSmall:getHeight()
+					draw_shadow_text(
+						current_level_stats.goblins ..
+						'/' .. current_level_stats.total_goblins .. ' Goblins',
+						vec2 { 25, y_pos },
+						2)
+					y_pos = y_pos + FontSmall:getHeight()
+					draw_shadow_text(current_level_stats.firecrackers .. ' Firecrackers used', vec2 { 25, y_pos }, 2)
+				else
+					draw_shadow_text('~ no data for this level ~', vec2 { 25, y_pos }, 2)
+				end
 			elseif state == 'heist' then
 				level:draw()
 				Cursor:draw()

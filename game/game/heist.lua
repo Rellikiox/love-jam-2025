@@ -13,6 +13,7 @@ local Cursor = require 'game.cursor'
 local Heist = Object:extend()
 
 function Heist:init(args)
+	self.id = ''
 	self.name = ''
 	self.offset = vec2.zero
 	self.layers = {}
@@ -220,6 +221,7 @@ function Heist:load_level(ldtk_level)
 end
 
 function Heist:create_level(ldtk_level)
+	self.id = ldtk_level.id
 	for plate, door in pairs(self.plates) do
 		plate:set_device(self.doors[door])
 	end
