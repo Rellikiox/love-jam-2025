@@ -123,6 +123,25 @@ function draw_level_preview(level_data, position)
 			love.graphics.rectangle("fill", point.x, point.y, 8, 8)
 		end
 	end
+
+	for _, entity in ipairs(level_data.entities) do
+		local point = position + (vec2 { entity.x, entity.y } / 4):floor()
+		if entity.id == 'Pressure_plate' then
+		elseif entity.id == 'Door_H' then
+			Colors.Brown:set()
+		elseif entity.id == 'Door_V' then
+			Colors.Brown:set()
+		elseif entity.id == 'Treasure' then
+			Colors.Orange:set()
+		elseif entity.id == 'Exit' then
+			Colors.Grass:set()
+		elseif entity.id == 'Spawn' then
+			Colors.Forest:set()
+		elseif entity.id == 'Enemy' then
+			Colors.Red:set()
+		end
+		love.graphics.circle("fill", point.x, point.y, 3)
+	end
 end
 
 function ldtk.onEntity(ldtk_entity)
@@ -211,8 +230,9 @@ function love.draw()
 				local level_data = all_levels[level_select.selected_level]
 				draw_level_preview(level_data, draw_position)
 
+				Colors.Black:set()
 				love.graphics.setFont(FontMedium)
-				draw_shadow_text(level_data.name, vec2 { 300, game_size.y / 2 - 150 }, 3)
+				love.graphics.print(level_data.name, 300, game_size.y / 2 - 150)
 
 				love.graphics.setFont(FontLarge)
 
