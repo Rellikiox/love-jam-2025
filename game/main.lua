@@ -18,7 +18,7 @@ level_select = {
 	selected_level = 1,
 	buttons = {
 		{
-			position = vec2 { 50, 250 },
+			position = vec2 { 250, 250 },
 			size = vec2 { 20, 20 },
 			text = '<',
 			on_click = function()
@@ -26,7 +26,7 @@ level_select = {
 			end
 		},
 		{
-			position = vec2 { 285, 250 },
+			position = vec2 { 485, 250 },
 			size = vec2 { 20, 20 },
 			text = '>',
 			on_click = function()
@@ -34,7 +34,7 @@ level_select = {
 			end
 		},
 		{
-			position = vec2 { 165, 350 },
+			position = vec2 { 365, 350 },
 			size = vec2 { 40, 30 },
 			text = 'Enter',
 			on_click = function()
@@ -207,12 +207,16 @@ function love.draw()
 				love.graphics.draw(Assets.images.main_menu, 0, 0)
 				draw_buttons(level_select.buttons)
 				Colors.FullWhite:set()
-				local draw_position = vec2 { 100, game_size.y / 2 - 100 }
+				local draw_position = vec2 { 300, game_size.y / 2 - 100 }
 				local level_data = all_levels[level_select.selected_level]
 				draw_level_preview(level_data, draw_position)
 
+				love.graphics.setFont(FontMedium)
+				draw_shadow_text(level_data.name, vec2 { 300, game_size.y / 2 - 150 }, 3)
+
 				love.graphics.setFont(FontLarge)
-				draw_shadow_text(level_data.name, vec2 { 400, 100 }, 3)
+
+				draw_shadow_text("What's the plan boss?", vec2 { 200, 20 }, 3)
 			elseif state == 'heist' then
 				level:draw()
 				Cursor:draw()

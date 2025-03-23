@@ -1,6 +1,7 @@
 local Assets = require 'game.assets'
 local Physics = require 'game.physics'
 local Events = require 'engine.events'
+local Agents = require 'game.agents'
 
 local Treasure = Object:extend()
 
@@ -36,7 +37,7 @@ end
 function ExitZone:update(delta)
 	local entities = Physics:get_entities_at(self.position, 5)
 	for _, entity in ipairs(entities) do
-		if entity.is_goblin then
+		if entity.is_goblin and level.treasure_obtained >= 1 then
 			Events:send('goblin-extracted', entity)
 		end
 	end
@@ -60,7 +61,7 @@ function PressurePlate:update(delta)
 	local was_pressed = self.pressed
 	self.pressed = false
 	for _, entity in ipairs(entities) do
-		if entity.is_goblin then
+		if entity:is(Agents.Agent) then
 			self.pressed = true
 			break
 		end

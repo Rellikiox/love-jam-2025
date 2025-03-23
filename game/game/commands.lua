@@ -185,9 +185,11 @@ function WaitComand:reset()
 	self.arrived = false
 	self.finished = false
 	self.wait_timer:reset()
+	self:set_wait_time(self._wait_time)
 end
 
 function WaitComand:set_wait_time(time)
+	self._wait_time = time
 	self.wait_time = string.format("%.1f", time)
 	self.wait_timer.timeout = tonumber(self.wait_time)
 end
@@ -304,6 +306,9 @@ function InvestigateCommand:update(delta)
 		local move_state = MoveCommand.update(self, delta)
 		self.arrived = move_state == CommandState.Finished
 	else
+		if self.wait_timer.paused then
+			self.wait_timer:start()
+		end
 		self.wait_timer:increment(delta)
 		if self.wait_timer.finished then
 			return CommandState.Destroy

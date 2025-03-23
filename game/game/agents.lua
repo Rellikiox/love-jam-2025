@@ -153,11 +153,6 @@ function BeingNosyComponent:update(delta)
 			self.investigation_command = Commands.Investigate { path = level.pathfinding:get_path(self.parent.position, target) }
 			self.parent:add_command(self.investigation_command, 1)
 		end
-	else
-		self.investigation_command = nil
-		if #self.parent.commands > 1 then
-			table.remove(self.parent.commands, 1)
-		end
 	end
 end
 
