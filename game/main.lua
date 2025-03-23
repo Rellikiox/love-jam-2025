@@ -107,8 +107,13 @@ function draw_buttons(buttons)
 end
 
 function centered_string(text, y_pos)
-	offset = love.graphics.getFont():getWidth(text) / 2
+	local offset = love.graphics.getFont():getWidth(text) / 2
 	love.graphics.print(text, math.floor(game_size.x / 2 - offset), math.floor(y_pos))
+end
+
+function centered_shadow_string(text, y_pos, shadow)
+	local offset = love.graphics.getFont():getWidth(text) / 2
+	draw_shadow_text(text, math.floor(game_size.x / 2 - offset), math.floor(y_pos), shadow)
 end
 
 state = 'level_select'
@@ -241,6 +246,12 @@ function love.draw()
 				love.graphics.setFont(FontLarge)
 
 				draw_shadow_text("What's the plan boss?", vec2 { 200, 20 }, 3)
+				draw_shadow_text("What's the plan boss?", vec2 { 200, 20 }, 3)
+
+				love.graphics.setFont(FontSmall)
+				local text = "~ Barely created by Martin Candela ~"
+				local offset = FontSmall:getWidth(text) / 2
+				draw_shadow_text(text, vec2 { game_size.x / 2 - offset, game_size.y - 30 }, 2)
 			elseif state == 'heist' then
 				level:draw()
 				Cursor:draw()

@@ -150,7 +150,11 @@ function BeingNosyComponent:update(delta)
 			table.remove(self.parent.commands, 1)
 		end
 		if not self.investigation_command then
-			self.investigation_command = Commands.Investigate { path = level.pathfinding:get_path(self.parent.position, target) }
+			local path = level.pathfinding:get_path(self.parent.position, target)
+			if not path then
+				return
+			end
+			self.investigation_command = Commands.Investigate { path = path }
 			self.parent:add_command(self.investigation_command, 1)
 		end
 	end

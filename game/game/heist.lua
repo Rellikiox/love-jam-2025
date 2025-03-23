@@ -320,12 +320,22 @@ function Heist:draw()
 	-- 	love.graphics.circle("line", x, y, 20)
 	-- end
 
-	Colors.White:set()
-	love.graphics.print(seconds_to_time(self.simulation_timer), 0, -36)
-
-	Colors.FullWhite:set()
 
 	love.graphics.pop()
+
+	Colors.White:set()
+	love.graphics.setFont(FontMedium)
+	local y_pos = 25
+	draw_shadow_text(seconds_to_time(self.simulation_timer), vec2 { 25, y_pos }, 2)
+	y_pos = y_pos + FontMedium:getHeight()
+	love.graphics.setFont(FontSmall)
+	draw_shadow_text(self.treasure_obtained .. '/' .. self.total_treasure .. ' Treasures', vec2 { 25, y_pos }, 2)
+	y_pos = y_pos + FontSmall:getHeight()
+	draw_shadow_text(self.remaining_goblins .. '/' .. self.starting_goblins .. ' Goblins', vec2 { 25, y_pos }, 2)
+	y_pos = y_pos + FontSmall:getHeight()
+	draw_shadow_text(self.firecrackers_used .. ' Firecrackers used', vec2 { 25, y_pos }, 2)
+
+	Colors.FullWhite:set()
 end
 
 function Heist:handle_keyreleased(key)

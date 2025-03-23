@@ -38,7 +38,7 @@ end
 function ExitZone:update(delta)
 	local entities = Physics:get_entities_at(self.position, 5)
 	for _, entity in ipairs(entities) do
-		if entity.is_goblin and level.treasure_obtained >= 1 then
+		if entity.is_goblin and level.treasure_obtained == level.total_treasure then
 			Events:send('goblin-extracted', entity)
 		end
 	end
