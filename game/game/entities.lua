@@ -2,6 +2,7 @@ local Assets = require 'game.assets'
 local Physics = require 'game.physics'
 local Events = require 'engine.events'
 local Agents = require 'game.agents'
+local SFX = require 'engine.sfx'
 
 local Treasure = Object:extend()
 
@@ -180,6 +181,7 @@ function Firecracker:init(args)
 		timeout = 3,
 		autostart = false,
 		callback = function()
+			SFX:play('firecracker')
 			local position = vec2 { self.body:getPosition() }
 			table.insert(level.entities, FirecrackerDust { position = position })
 			local neaby = Physics:get_entities_at(position, 100)

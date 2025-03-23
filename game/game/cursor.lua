@@ -1,7 +1,7 @@
 local Commands = require 'game.commands'
 local Physics = require 'game.physics'
 local Assets = require 'game.assets'
-local Entities = require 'game.entities'
+local SFX = require 'engine.sfx'
 
 local CusorMode = {
 	Select = 'Select',
@@ -37,6 +37,9 @@ local Cursor = {
 				if agent.is_goblin and not agent.captured and agent.position:distance(level:mouse_position()) <= agent.radius then
 					self.selected_agent = agent
 					self:set_mode(CusorMode.MoveCommand)
+
+					SFX:play('grunt' .. math.random(9))
+
 					return
 				end
 			end
@@ -61,6 +64,7 @@ local Cursor = {
 			end
 			self.selected_agent:add_command(self.next_command)
 			self:set_mode(CusorMode.MoveCommand)
+			SFX:play('grunt' .. math.random(9))
 		elseif self.mode == CusorMode.DistractCommand then
 			if not self:current_command_is_valid() then
 				-- Play sfx
@@ -68,6 +72,7 @@ local Cursor = {
 			end
 
 			self:set_mode(CusorMode.DistractTarget)
+			SFX:play('grunt' .. math.random(9))
 		elseif self.mode == CusorMode.DistractTarget then
 			if not self:current_command_is_valid() then
 				-- Play sfx
@@ -75,6 +80,7 @@ local Cursor = {
 			end
 			self.selected_agent:add_command(self.next_command)
 			self:set_mode(CusorMode.DistractCommand)
+			SFX:play('grunt' .. math.random(9))
 		elseif self.mode == CusorMode.WaitCommand then
 			if not self:current_command_is_valid() then
 				-- Play sfx
@@ -82,17 +88,21 @@ local Cursor = {
 			end
 
 			self:set_mode(CusorMode.WaitTimer)
+			SFX:play('grunt' .. math.random(9))
 		elseif self.mode == CusorMode.WaitTimer then
 			self.selected_agent:add_command(self.next_command)
 			self:set_mode(CusorMode.WaitCommand)
+			SFX:play('grunt' .. math.random(9))
 		elseif self.mode == CusorMode.EditCommandPosition then
 			if self.selected_command:is(Commands.ThrowFirecracker) or self.selected_command:is(Commands.Wait) then
 				self:set_mode(CusorMode.EditCommandValue)
 			else
 				self:set_mode(CusorMode.Select)
 			end
+			SFX:play('grunt' .. math.random(9))
 		elseif self.mode == CusorMode.EditCommandValue then
 			self:set_mode(CusorMode.Select)
+			SFX:play('grunt' .. math.random(9))
 		elseif self.mode == CusorMode.ListenCommand then
 			if not self:current_command_is_valid() then
 				-- Play sfx
@@ -100,6 +110,7 @@ local Cursor = {
 			end
 			self.selected_agent:add_command(self.next_command)
 			self:set_mode(CusorMode.ListenCommand)
+			SFX:play('grunt' .. math.random(9))
 		elseif self.mode == CusorMode.ShoutCommand then
 			if not self:current_command_is_valid() then
 				-- Play sfx
@@ -107,6 +118,7 @@ local Cursor = {
 			end
 			self.selected_agent:add_command(self.next_command)
 			self:set_mode(CusorMode.ShoutCommand)
+			SFX:play('grunt' .. math.random(9))
 		elseif self.mode == CusorMode.InteractCommand then
 			if not self:current_command_is_valid() then
 				-- Play sfx
@@ -114,6 +126,7 @@ local Cursor = {
 			end
 			self.selected_agent:add_command(self.next_command)
 			self:set_mode(CusorMode.InteractCommand)
+			SFX:play('grunt' .. math.random(9))
 		end
 	end,
 	mouse_2_released = function(self)

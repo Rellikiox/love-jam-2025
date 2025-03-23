@@ -7,6 +7,7 @@ local Entities = require 'game.entities'
 local Events = require 'engine.events'
 local Heist = require 'game.heist'
 local Cursor = require 'game.cursor'
+local SFX = require 'engine.sfx'
 
 game_size = vec2 { 800, 600 }
 
@@ -48,6 +49,7 @@ level_select = {
 		else
 			level_select.selected_level = level_select.selected_level + 1
 		end
+		SFX:play('turn_page')
 	end,
 	prev_level = function()
 		if level_select.selected_level == 1 then
@@ -55,6 +57,7 @@ level_select = {
 		else
 			level_select.selected_level = level_select.selected_level - 1
 		end
+		SFX:play('turn_page')
 	end,
 	start_level = function()
 		local level_data = all_levels[level_select.selected_level]
@@ -175,6 +178,7 @@ function love.load()
 
 	Assets:load()
 	Physics:load()
+	SFX:load(Settings.sfx)
 
 	Events:listen(nil, 'launch-firecracker', function(from, to)
 		level.firecrackers_used = level.firecrackers_used + 1

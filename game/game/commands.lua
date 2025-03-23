@@ -1,5 +1,6 @@
 local Assets = require 'game.assets'
 local Events = require 'engine.events'
+local SFX = require 'engine.sfx'
 
 local CommandState = {
 	Running = 'running',
@@ -155,6 +156,7 @@ function ThrowFirecrackerComand:update(delta)
 		self.arrived = move_state == CommandState.Finished
 		if self.arrived then
 			self.wait_timer:start()
+			SFX:play('firecracker_start')
 		end
 	else
 		self.wait_timer:increment(delta)
@@ -348,6 +350,7 @@ function InteractCommand:update(delta)
 		self.arrived = move_state == CommandState.Finished
 	else
 		if self.loot_timer.paused then
+			SFX:play('treasure' .. math.random(6))
 			self.loot_timer:start()
 		end
 		self.loot_timer:increment(delta)
