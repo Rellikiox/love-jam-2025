@@ -119,7 +119,7 @@ end
 local level_stats = {}
 
 function load_level_stats()
-	local file = love.filesystem.newFile('level-scores.txt')
+	local file = love.filesystem.newFile('whats-the-plan-boss-level-scores.txt')
 	local stats = {}
 	if file:open('r') then
 		for line in file:lines() do
@@ -143,13 +143,13 @@ function load_level_stats()
 end
 
 function save_level_stats(stats)
-	local file = love.filesystem.newFile('level-scores.txt')
+	local file = love.filesystem.newFile('whats-the-plan-boss-level-scores.txt')
 	if file:open('w') then
 		for level_id, data in pairs(stats) do
 			local line = string.format(
 				"%s,%d,%d,%d,%d,%d,%d\n",
 				level_id,
-				data.time or 0,
+				(data.time * 1000) or 0,
 				data.treasure or 0,
 				data.total_treasure or 0,
 				data.goblins or 0,
@@ -252,9 +252,9 @@ function love.load()
 
 	Events:listen(nil, 'goblin-extracted', function(goblin)
 		state = 'win_con'
-		if not level_stats[level.id] or level.simulation_timer * 1000 < level_stats[level.id].time then
+		if not level_stats[level.id] or level.simulation_timer < level_stats[level.id].time then
 			level_stats[level.id] = {
-				time = level.simulation_timer * 1000,
+				time = level.simulation_timer,
 				treasure = level.treasure_obtained,
 				total_treasure = level.total_treasure,
 				goblins = level.remaining_goblins,

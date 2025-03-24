@@ -59,7 +59,6 @@ local Cursor = {
 			end
 		elseif self.mode == CusorMode.MoveCommand then
 			if not self:current_command_is_valid() then
-				-- Play sfx
 				return
 			end
 			self.selected_agent:add_command(self.next_command)
@@ -67,7 +66,6 @@ local Cursor = {
 			SFX:play('grunt' .. math.random(9))
 		elseif self.mode == CusorMode.DistractCommand then
 			if not self:current_command_is_valid() then
-				-- Play sfx
 				return
 			end
 
@@ -75,7 +73,6 @@ local Cursor = {
 			SFX:play('grunt' .. math.random(9))
 		elseif self.mode == CusorMode.DistractTarget then
 			if not self:current_command_is_valid() then
-				-- Play sfx
 				return
 			end
 			self.selected_agent:add_command(self.next_command)
@@ -83,7 +80,6 @@ local Cursor = {
 			SFX:play('grunt' .. math.random(9))
 		elseif self.mode == CusorMode.WaitCommand then
 			if not self:current_command_is_valid() then
-				-- Play sfx
 				return
 			end
 
@@ -94,18 +90,19 @@ local Cursor = {
 			self:set_mode(CusorMode.WaitCommand)
 			SFX:play('grunt' .. math.random(9))
 		elseif self.mode == CusorMode.EditCommandPosition then
-			if self.selected_command:is(Commands.ThrowFirecracker) or self.selected_command:is(Commands.Wait) then
-				self:set_mode(CusorMode.EditCommandValue)
-			else
-				self:set_mode(CusorMode.Select)
+			if self:current_command_is_valid() then
+				if self.selected_command:is(Commands.ThrowFirecracker) or self.selected_command:is(Commands.Wait) then
+					self:set_mode(CusorMode.EditCommandValue)
+				else
+					self:set_mode(CusorMode.Select)
+				end
+				SFX:play('grunt' .. math.random(9))
 			end
-			SFX:play('grunt' .. math.random(9))
 		elseif self.mode == CusorMode.EditCommandValue then
 			self:set_mode(CusorMode.Select)
 			SFX:play('grunt' .. math.random(9))
 		elseif self.mode == CusorMode.ListenCommand then
 			if not self:current_command_is_valid() then
-				-- Play sfx
 				return
 			end
 			self.selected_agent:add_command(self.next_command)
@@ -113,7 +110,6 @@ local Cursor = {
 			SFX:play('grunt' .. math.random(9))
 		elseif self.mode == CusorMode.ShoutCommand then
 			if not self:current_command_is_valid() then
-				-- Play sfx
 				return
 			end
 			self.selected_agent:add_command(self.next_command)
@@ -121,7 +117,6 @@ local Cursor = {
 			SFX:play('grunt' .. math.random(9))
 		elseif self.mode == CusorMode.InteractCommand then
 			if not self:current_command_is_valid() then
-				-- Play sfx
 				return
 			end
 			self.selected_agent:add_command(self.next_command)
@@ -170,7 +165,7 @@ local Cursor = {
 		end
 	end,
 	current_command_is_valid = function(self)
-		if not self.next_command then
+		if not self.next_command and not self.selected_command then
 			return true
 		end
 
@@ -194,6 +189,10 @@ local Cursor = {
 				level:mouse_position())
 
 			if not command_to_mouse then
+				return false
+			end
+
+			if self.selected_command:is(Commands.Interact) and not level:treasure_at(self.selected_command.position) then
 				return false
 			end
 
